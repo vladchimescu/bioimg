@@ -16,6 +16,7 @@ import skimage
 
 from transform.process import adjust_contrast, elevation_map
 from transform.process import threshold_stack, tophat_stack
+from transform.process import threshold_img
 
 
 def find_markers(imgstack, perc=95, mdist=3):
