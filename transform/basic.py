@@ -44,6 +44,8 @@ def read_tiff(fname):
                          imgmd.Pixels.get_SizeY()))
     imgarray = rdr.read()
 
+    print("Image size: %3d x %3d" % imgarray.shape)
+
     return imgarray
 
 
