@@ -31,7 +31,7 @@ def load_imgstack(fname):
     for c in range(0, imgmd.Pixels.get_channel_count()):
         for z in range(0, imgmd.Pixels.get_SizeZ()):
             imgarray[z, :, :, c] = rdr.read(c=c, z=z)
-
+    print("Image size: %3d x %3d x %3d x %3d" % imgarray.shape)
     return imgarray
 
 
@@ -49,7 +49,7 @@ def read_tiff(fname):
     return imgarray
 
 
-def load_tiff_series(path, well):
+def load_image_series(path, well):
     tif_files = [f for f in os.listdir(path)
                  if re.match('.*\.tiff', f)]
     p = "^" + well + ".+$"
