@@ -4,7 +4,6 @@ Microscopy image input/output functions
 Author: Vladislav Kim
 """
 import os
-import re
 import numpy as np
 import bioformats as bf
 from skimage import img_as_uint
@@ -65,12 +64,30 @@ def load_image_series(path, imgfiles):
     return imgarray
 
 
-# write TIFF series (image stack, multichannel)
-def write_tiff_series(img_w, pathname):
-    for z in range(img_w.shape[0]):
-        for c in range(img_w.shape[3]):
-            bf.write_image(pathname=pathname,
-                           pixels=img_as_uint(img_w[z, :, :, c]),
-                           pixel_type=bf.PT_UINT16,
-                           z=z, c=c,  size_c=img_w.shape[3],
-                           size_z=img_w.shape[0])
+def write_image(img, path, z=0, c=0, size_c=1, size_z=1,
+                channel_names=None):
+    bf.write_image(pathname=path,
+                   pixels=img_as_uint(img),
+                   pixel_type=bf.PT_UINT16,
+                   z=z, c=c, size_c=size_c,
+                   size_z=size_z,
+                   channel_names=channel_names)
+
+
+def write_imgstack(img, path, size_z, size_c):
+    if size_z == 1:
+        print("Adding an extra dimension for z")
+        img = img[None, ...]
+    if size_c == 1:
+        print("Adding an extra dimension for c")
+        img = img[..., None]
+
+    if img.shape[0] != size_z | img.shape[-1] != size_c:
+        raise ValueError(
+            "Channel and z-stack order are mixed up")
+
+    for z in range(size_z):
+        for c in range(size_c):
+            write_image(img[z, :, :, c], path=path,
+                        z=z, c=c, size_z=size_z,
+                        size_c=size_c)
