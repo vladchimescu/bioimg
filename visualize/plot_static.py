@@ -30,7 +30,7 @@ def plot_channels(images, nrow, ncol, titles=None,
     plt.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
     for i in range(nrow * ncol):
         plt.subplot(nrow, ncol, i + 1)
-        plt.imshow(images[i], cmap=None)
+        plt.imshow(images[i], cmap=cmap)
         if titles is not None:
             plt.title(titles[i], size=12)
         plt.xticks(())
