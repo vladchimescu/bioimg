@@ -66,7 +66,7 @@ def load_imgstack(fname):
 
 
 # function for reading in TIFF images
-def read_tiff(fname, verbose=True):
+def read_image(fname, verbose=True):
     imgmd = get_img_metadata(fname)
     rdr = bf.ImageReader(fname, perform_init=True)
 
@@ -88,8 +88,8 @@ def load_image_series(path, imgfiles):
                          imgmd.Pixels.get_SizeY()))
 
     for i, fname in enumerate(imgfiles):
-        imgarray[i, :, :] = read_tiff(os.path.join(path, fname),
-                                      verbose=False)
+        imgarray[i, :, :] = read_image(os.path.join(path, fname),
+                                       verbose=False)
 
     print("Series of %d images of size: %3d x %3d" % imgarray.shape)
     return imgarray
