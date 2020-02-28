@@ -28,7 +28,7 @@ def plot_channels(images, nrow, ncol, titles=None,
                   scale_x=4, scale_y=4, cmap=None):
     plt.figure(figsize=(scale_x * ncol, scale_y * nrow))
     plt.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
-    for i in range(nrow * ncol):
+    for i in range(len(images)):
         plt.subplot(nrow, ncol, i + 1)
         plt.imshow(images[i], cmap=cmap)
         if titles is not None:
