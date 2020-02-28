@@ -71,3 +71,16 @@ def elevation_map(img, sigma=1):
     for z in range(img.shape[0]):
         LoG_calc[z] = nd.gaussian_laplace(img[z], sigma=sigma)
     return LoG_calc
+
+
+# filtering out high-frequency components by FFT based on fixed thresholds
+def filter_highfreq(img, keep=0.2):
+    im_fft = np.fft.fft2(img)
+    im_fft2 = im_fft.copy()
+    r, c = im_fft2.shape
+    # Set to zero all rows with indices between r*keep_fraction and
+    # r*(1-keep_fraction):
+    im_fft2[int(r*keep):int(r*(1-keep))] = 0
+    # Similarly with the columns:
+    im_fft2[:, int(c*keep):int(c*(1-keep))] = 0
+    return np.fft.ifft2(im_fft2).real
