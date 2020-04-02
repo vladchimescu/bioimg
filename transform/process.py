@@ -44,7 +44,7 @@ def threshold_stack(imgstack):
     return img_ret
 
 
-def threshold_img(img, method='yen'):
+def threshold_img(img, method='yen', binary=False):
     img_ret = np.copy(img)
 
     if np.sum(img_ret) < 1e-18:
@@ -56,6 +56,9 @@ def threshold_img(img, method='yen'):
         img_ret[img_ret < skimage.filters.threshold_otsu(img)] = 0
     elif method is 'triangle':
         img_ret[img_ret < skimage.filters.threshold_triangle(img)] = 0
+
+    if binary:
+        return img_ret > 0
     return img_ret
 
 

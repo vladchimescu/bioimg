@@ -118,9 +118,9 @@ def detect_spots(img, max_sigma=10, min_sigma=4, num_sigma=10, overlap=0.5):
 # converts 'nan' values to -1
 # (this is done since the shape index transforms the image
 # to np.float array with values [-1,1])
-def nantonum(img):
+def nantonum(img, pad=-1):
     img_r = np.copy(img)
-    img_r[np.isnan(img_r)] = -1
+    img_r[np.isnan(img_r)] = pad
     return img_r
 
 
