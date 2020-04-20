@@ -6,17 +6,64 @@ such as watershed or spot detection
 
 import scipy.ndimage as nd
 import numpy as np
-from skimage.morphology import disk, binary_closing
+import pandas as pd
+from skimage.morphology import disk, binary_closing, binary_erosion
 from skimage import feature
 from skimage import morphology
 from skimage import segmentation
 from skimage.feature import shape_index, blob_log
 from skimage.filters import gaussian
+from skimage.measure import label
 import skimage
 
 from transform.process import adjust_contrast, elevation_map
 from transform.process import threshold_stack, tophat_stack
 from transform.process import threshold_img
+
+
+def segment_connected_components(img):
+    img_th = binary_erosion(threshold_img(img, method='otsu',
+                                          binary=True), disk(5))
+    segm = label(img_th, connectivity=1)
+    pass
+
+
+def get_feattable(feats, keys):
+    '''Get region property summary as DataFrame
+       ----------------------------------------
+       Subsets regionprops object to selected keys and
+       returns a DataFrame
+
+       Parameters
+       ----------
+       feats : RegionProperties object
+       keys : list of strings
+
+       Returns
+       -------
+       DataFrame : pd.DataFrame of selected features
+
+    '''
+    return pd.DataFrame({key: [f[key] for f in feats] for key in keys})
+
+
+def get_bounds(feat_df, key, bounds):
+    '''Find regions within the RegionProperties bounded range
+       ------------------------------------------------------
+       Returns a boolean array for image regions whose properties
+       are within the specified bounds
+
+       Parameters
+       ----------
+       feat_df : DataFrame
+           Region properties of the image as DataFrame
+       key : key of a dict
+       bounds : tuple
+           Tuple of length 2 with lower_bound = bounds[0] and
+           upper_bound = bounds[1]
+    '''
+    series = np.logical_and(feat_df[key] > bounds[0], feat_df[key] < bounds[1])
+    return series.values
 
 
 def find_markers(imgstack, perc=95, mdist=3):
