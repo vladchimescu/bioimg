@@ -12,17 +12,16 @@ import seaborn as sn
 import pandas as pd
 import os
 import sys
-
 from skimage.morphology import disk, binary_erosion
 from skimage.morphology import white_tophat
 from skimage.morphology import remove_small_objects
 from skimage.measure import label
 from skimage.measure import regionprops
-
 sys.path.append('..')
 from base.utils import load_imgstack
 from transform.process import threshold_img
 from segment.cv_methods import filter_segm
+from base.future_versions import regionprops_table
 
 
 def segment_connected_components(img):
@@ -66,6 +65,41 @@ def segment_connected_components(img):
     return segm_out
 
 
+def get_feature_table(segm, img):
+    '''Return feature table for labelled regions
+       -----------------------------------------
+       Computes region properties for the labelled regions
+       and returns all features except 'image', 'filled_image',
+       'convex_image', 'extent' and 'coords'.
+
+       Parameters
+       ----------
+       segm : array
+           Labelled image array
+       img : array
+           Intensity image
+
+       Returns
+       -------
+       feat_df : DataFrame
+           Table with region properties with 'image' and 'filled_image'
+           excluded.
+    '''
+    feats_out = regionprops(label_image=segm, intensity_image=img)
+    keys = [k for k in feats_out[0]]
+    exclude = ['convex_image', 'coords', 'extent',
+               'filled_image', 'image']
+    selected_keys = list(set(keys) - set(exclude))
+    # sort by key lexicographically
+    selected_keys.sort()
+
+    feat_dict = regionprops_table(segm,
+                                  intensity_image=img,
+                                  properties=selected_keys)
+    feat_df = pd.DataFrame(feat_dict)
+    return feat_df
+
+
 if __name__ == "__main__":
     javabridge.start_vm(class_path=bf.JARS)
 
@@ -76,11 +110,25 @@ if __name__ == "__main__":
     print "Processing plate: " + str(plate)
 
     # image name
-    fname = sys.argv[3]
+    fname = sys.argv[3] + '.tiff'
 
-    imgstack = load_imgstack(fname=path + plate + "/" + fname)
+    imgname = os.path.join(path, plate, fname)
+    imgstack = load_imgstack(fname=imgname)
 
     # remove a 'dummy' z-axis
     img = np.squeeze(imgstack)
+    # for gamma correction
+    gamma = 0.4
+    # nuclei
+    hoechst = img[:, :, 0]**gamma
+
+    # obtain initial segmentation map for
+    # leukemia and stroma nuclei
+    segm_out = segment_connected_components(img=hoechst)
+
+    # get the region peroperties
+    feat_df = get_feature_table(segm=segm_out, img=hoechst)
+    feat_df.to_csv(path + plate + '/' + fname + '.csv',
+                   index=False)
 
     javabridge.kill_vm()
