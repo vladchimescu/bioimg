@@ -62,3 +62,37 @@ def combine_channels(images, colors, blend=None, gamma=None):
               for img, c in zip(images, colors)]
     images = [b * img for img, b in zip(images, blend)]
     return sum(images)
+
+
+def show_bbox(img, bbox, color='white', lw=2, size=12):
+    '''Display bounding boxes of the segmentation
+       ------------------------------------------
+       Show the original intensity image or RGB overlay
+       together with the bounding boxes of labelled regions
+
+       Parameters
+       ----------
+       img : array
+           Intensity or RGB image
+       bbox: list / array of tuples
+           Each tuple represents the bounding box image
+           coordinates (xmin, xmax, ymin, ymax)
+       color : string
+           Color of the bounding boxes
+       lw : float
+           Linewidth of the bounding boxes
+       size : int
+           Figure size
+    '''
+    fig, ax = plt.subplots(1, 1, figsize=(size, size))
+    ax.imshow(img)
+    for bb in bbox:
+        start = (bb[0], bb[2])
+        extent = (bb[1] - bb[0],
+                  bb[3] - bb[2])
+        rec = plt.Rectangle(xy=start,
+                            width=extent[1],
+                            height=extent[0], color=color,
+                            linewidth=lw, fill=False)
+        ax.add_patch(rec)
+    ax.axis('off')

@@ -22,13 +22,6 @@ from transform.process import threshold_stack, tophat_stack
 from transform.process import threshold_img
 
 
-def segment_connected_components(img):
-    img_th = binary_erosion(threshold_img(img, method='otsu',
-                                          binary=True), disk(5))
-    segm = label(img_th, connectivity=1)
-    pass
-
-
 def get_feattable(feats, keys):
     '''Get region property summary as DataFrame
        ----------------------------------------
