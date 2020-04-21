@@ -118,7 +118,7 @@ if __name__ == "__main__":
     # remove a 'dummy' z-axis
     img = np.squeeze(imgstack)
     # for gamma correction
-    gamma = 0.4
+    gamma = 0.3
     # nuclei
     hoechst = img[:, :, 0]**gamma
 
@@ -128,7 +128,7 @@ if __name__ == "__main__":
 
     # get the region peroperties
     feat_df = get_feature_table(segm=segm_out, img=hoechst)
-    feat_df.to_csv(path + plate + '/' + fname + '.csv',
-                   index=False)
+    fout = os.path.join(path, plate, fname.replace('.tiff', '.csv'))
+    feat_df.to_csv(fout, index=False)
 
     javabridge.kill_vm()
