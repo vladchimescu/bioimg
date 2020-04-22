@@ -52,6 +52,8 @@ def segment_connected_components(img):
     big = filter_segm(img=img, labels=segm, bounds={'area': (6000, np.inf)}) +\
         filter_segm(img=img, labels=segm, bounds={
                     'perimeter': (1000, np.inf)})
+    if len(big[big != 0]) == 0:
+        return segm1
     big_obj = img*np.isin(segm, np.unique(big[big != 0]))
     img_tophat = white_tophat(big_obj, disk(25))
     # bright spots from the large regions that were filtered out
