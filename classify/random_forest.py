@@ -19,13 +19,6 @@ import h5py
 from _internals import get_regionprop_feats
 
 
-def convert_well_name(fname):
-    pass
-
-
-exclude = []
-
-
 class IncrementalClassifier:
     def __init__(self, **kwargs):
 
