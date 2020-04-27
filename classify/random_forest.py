@@ -4,7 +4,6 @@ Image classification with random forest
 """
 import numpy as np
 import functions as fn
-import visualize as vi
 from plotly.offline import iplot
 from skimage.exposure import equalize_adapthist
 from skimage.transform import resize

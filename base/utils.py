@@ -43,7 +43,7 @@ def get_physical_scale(fname):
 
 
 # function for reading in .czi images
-def load_imgstack(fname):
+def load_imgstack(fname, verbose=True):
     # image metadata
     imgmd = get_img_metadata(fname)
     # image reader object
@@ -61,7 +61,8 @@ def load_imgstack(fname):
     for c in range(0, imgmd.Pixels.get_channel_count()):
         for z in range(0, imgmd.Pixels.get_SizeZ()):
             imgarray[z, :, :, c] = rdr.read(c=c, z=z)
-    print("Image size: %3d x %3d x %3d x %3d" % imgarray.shape)
+    if verbose:
+        print("Image size: %3d x %3d x %3d x %3d" % imgarray.shape)
     return imgarray
 
 
