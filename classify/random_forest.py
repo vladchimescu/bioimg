@@ -3,7 +3,6 @@
 Image classification with random forest
 """
 import numpy as np
-import functions as fn
 from plotly.offline import iplot
 from skimage.exposure import equalize_adapthist
 from skimage.transform import resize
@@ -15,37 +14,12 @@ from sklearn.model_selection import cross_val_score
 import matplotlib.pyplot as plt
 import h5py
 
-from _internals import get_regionprop_feats
-
 
 class IncrementalClassifier:
     def __init__(self, **kwargs):
-
-        # width and height of a standardised image
-        self.w = 40
-        self.h = 40
-
-        # some default arguments
-        self.path = kwargs.get("path")   # image path
-        # directory where the pre-computed instance bounding boxes are stored
-        self.featdir = kwargs.get("featdir")
-        # selected well in the view
-        self.select_well = kwargs.get("select_well")
-        self.target_names = kwargs.get("target_names")  # class names
-        self.X_train_norm = kwargs.get("X_train_norm")
-        self.X_train_prop = kwargs.get("X_train_prop")
-        self.y_train = kwargs.get("y_train")
-
         # initialize with 'None' something to be loaded later
         self.img = None
         self.bb = None
-        self.cellbb = None
-        self.y_pred = None
-        self.y_prob = None
-        self.X_test_norm = None
-        self.X_test_prop = None
-        self.layout = None
-        self.feats = None
         self.newlabels = None
         # inialize classifier as 'None'
         self.clf = None
@@ -57,18 +31,8 @@ class IncrementalClassifier:
     # function for setting individual class parameters
     def set_param(self, **kwargs):
         for k in kwargs.keys():
-            if k in ['path', 'featdir', 'select_well',
-                     'target_names', 'w', 'h']:
-                self.__setattr__(k, kwargs[k])
+            self.__setattr__(k, kwargs[k])
 
-    # load well image and feature data
-    def load_img(self):
-        fl = self.featdir + self.select_well
-        self.bb, self.cellbb = fn.get_instances_from_well(
-            fname=fl, imgpath=self.path)
-        return self
-
-    # EDIT this one
     # generate predictions with the loaded feature data
     def generate_predictions(self, prob=False):
         if self.X_test_norm is None:
@@ -121,29 +85,6 @@ class IncrementalClassifier:
                                      y_pred=self.y_pred,
                                      target_names=self.target_names)
         return self
-
-    def show_subset(self, inds):
-        self.feats = vi.update_feats(img=self.img,
-                                     bb=[self.bb[i] for i in inds],
-                                     y_pred=self.y_pred[inds],
-                                     target_names=self.target_names)
-        return self
-
-    def add_training_set(self, newlabels):
-        if newlabels.size:
-            cellbb_new = [self.cellbb[i] for i in newlabels[:, 0]]
-            cellbb_new_norm = [resize(cb, (self.w, self.h), anti_aliasing=True)
-                               for cb in cellbb_new]
-
-            self.X_train_norm = np.array(
-                [cbn.ravel() for cbn in cellbb_new_norm])
-            self.y_train = newlabels[:, 1]
-
-            X_prop_list = [get_regionprop_feats(
-                mip_rgb=cbb, exclude=exclude) for cbb in cellbb_new]
-            self.X_train_prop = np.vstack(X_prop_list)
-
-            return self
 
     def add_instances(self, newlabels):
         if self.newlabels is None:
@@ -214,30 +155,6 @@ class IncrementalClassifier:
                                labels=range(len(self.target_names))))
         return self
 
-    def get_feat_importance(self, max_feats=20):
-        importances = self.clf.feature_importances_
-
-        std = np.std([tree.feature_importances_ for tree in self.clf.estimators_],
-                     axis=0)
-        indices = np.argsort(importances)[::-1]
-
-        # Print the feature ranking
-        print("Feature ranking:")
-
-        for f in range(max_feats):
-            print("%d. feature %d (%f)" %
-                  (f + 1, indices[f], importances[indices[f]]))
-
-        # Plot the feature importances of the forest
-        plt.figure()
-        plt.title("Feature importances")
-        plt.bar(range(self.X_train_prop.shape[1] + 150), importances[indices],
-                color="r", yerr=std[indices], align="center")
-        plt.xticks(range(self.X_train_prop.shape[1] + 150), indices)
-        plt.xlim([-1, max_feats])
-
-        return self
-
     def get_cross_val_score(self, kfold=5):
         X_train_pca = self.pca.transform(self.X_train_norm)
         X_train_all = np.append(X_train_pca, self.X_train_prop, axis=1)
@@ -245,13 +162,6 @@ class IncrementalClassifier:
         print scores
 
         return self
-
-    def get_low_score(self, cl=0, n=1):
-        if self.y_prob is not None:
-            maxprob = np.max(self.y_prob, axis=1)
-            probrank = maxprob.argsort().argsort()
-            minrank = np.sort(probrank[self.y_pred == cl])[:n]
-            return np.where(np.isin(probrank, minrank))[0]
 
     def reset(self):
         self.newlabels = None
