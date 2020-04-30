@@ -54,14 +54,18 @@ class ImgX:
 
        Examples
        --------
-       >>> imgx_test = ImgX(img=img**0.4, bbox=bbox)
-       >>> imgx_test = imgx_test.compute_props(n_chan=3)
-       >>> imgx_test = imgx_test.compute_props(n_chan=['hoechst', 'ly', 'calcein'])
+       >>> imgx_test = ImgX(img=img**0.4, bbox=bbox, n_chan=3)
+       >>> imgx_test = imgx_test.compute_props()
+       >>> # or initialize with channel names as n_chan argument
+       >>> imgx_test = ImgX(img=img**0.4, bbox=bbox,
+                            n_chan=['hoechst', 'ly', 'calcein'])
+       >>> imgx_test = imgx_test.compute_props()
     '''
 
-    def __init__(self, img, bbox, y=None):
+    def __init__(self, img, bbox, n_chan=None, y=None):
         self.img = img
         self.bbox = bbox
+        self.n_chan = n_chan
         self.y = y
 
         self.data = dict()
@@ -81,16 +85,16 @@ class ImgX:
         else:
             self.data = prop_df
 
-    def compute_props(self, n_chan=None, split=True):
+    def compute_props(self, split=True):
         # split=True means that the color channels will be split and the
         # properties will be computed for each channel separately
-        if isinstance(n_chan, int) and split:
-            for c in range(n_chan):
+        if isinstance(self.n_chan, int) and split:
+            for c in range(self.n_chan):
                 self._get_features(img=self.img[:, :, c], c=c)
-        if hasattr(n_chan, "__len__") and split:
-            for c, col in enumerate(n_chan):
+        if hasattr(self.n_chan, "__len__") and split:
+            for c, col in enumerate(self.n_chan):
                 self._get_features(img=self.img[:, :, c], c=col)
-        if n_chan is None or split is False:
+        if self.n_chan is None or split is False:
             img_gray = rgb2gray(self.img)
             self._get_features(img=img_gray)
         return self
