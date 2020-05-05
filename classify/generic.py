@@ -14,7 +14,7 @@ KEYS = ['area', 'centroid',
         'major_axis_length',
         'minor_axis_length',
         'moments', 'moments_central',
-        'moments_hu', 'moments_normalized',
+        'moments_hu',
         'orientation', 'perimeter', 'solidity']
 
 # create a data frame with texture features
