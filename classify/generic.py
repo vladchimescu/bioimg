@@ -81,6 +81,8 @@ class ImgX:
         # all region and GLCM properties for each 'cellbb'
         prop_df = pd.concat(data_list)
         if c is not None:
+            prop_df.columns = ['-'.join(['ch', str(c), col])
+                               for col in prop_df.columns.values]
             self.data[c] = prop_df
         else:
             self.data = prop_df
@@ -97,4 +99,9 @@ class ImgX:
         if self.n_chan is None or split is False:
             img_gray = rgb2gray(self.img)
             self._get_features(img=img_gray)
+
+        if len(self.data) > 1:
+            self.data = pd.concat(self.data, axis=1)
+            self.data.columns = self.data.columns.droplevel()
+
         return self
