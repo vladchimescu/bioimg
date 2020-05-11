@@ -41,7 +41,8 @@ def make_bbox(feats, rmax, cmax, pad):
     return bbox
 
 
-def read_bbox(df, rmax, cmax, pad=20):
+def read_bbox(df, rmax, cmax, columns=['bbox-0', 'bbox-1', 'bbox-2', 'bbox-3'],
+              pad=0):
     '''Extract bounding boxes from DataFrame
        -------------------------------------
        Make a list of bounding box coordinate tuples
@@ -64,7 +65,7 @@ def read_bbox(df, rmax, cmax, pad=20):
            List of bounding box coordinates in
            (xmin, xmax, ymin, ymax) tuples
     '''
-    bbox_array = df[['bbox-0', 'bbox-1', 'bbox-2', 'bbox-3']].values
+    bbox_array = df[columns].values
 
     bbox = make_bbox(feats=bbox_array,
                      rmax=rmax, cmax=cmax,
