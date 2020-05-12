@@ -124,8 +124,10 @@ class IncrementalClassifier:
         # set labels to these
         self.imgx.y = ypred.argmax(axis=1)
 
-    def h5_write(self, fname):
+    def h5_write(self, fname, group):
         hf = h5py.File(fname, 'w')
-        hf.create_dataset('Xtrain', data=self.Xtrain)
-        hf.create_dataset('ytrain', data=self.ytrain.argmax(axis=1))
+        hf.create_dataset(group + '/Xtrain', data=self.Xtrain)
+        hf.create_dataset(group + '/ytrain', data=self.ytrain.argmax(axis=1))
+        hf.create_dataset(group + '/columns',
+                          data=self.Xtrain.columns.values.tolist())
         hf.close()
