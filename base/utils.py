@@ -43,7 +43,7 @@ def get_physical_scale(fname):
 
 
 # function for reading in .czi images
-def load_imgstack(fname, verbose=True):
+def load_imgstack(fname, verbose=False):
     # image metadata
     imgmd = get_img_metadata(fname)
     # image reader object
@@ -52,15 +52,22 @@ def load_imgstack(fname, verbose=True):
     # initialize an empty numpy array to store the image data
     # the size of the array is
     # (Z, X, Y, C)
-    imgarray = np.zeros((imgmd.Pixels.get_SizeZ(),
-                         imgmd.Pixels.get_SizeX(),
-                         imgmd.Pixels.get_SizeY(),
-                         imgmd.Pixels.get_channel_count()))
+    n_stacks = imgmd.Pixels.get_SizeZ()
+    n_col = imgmd.Pixels.get_channel_count()
 
-    # read in the image into the array
-    for c in range(0, imgmd.Pixels.get_channel_count()):
-        for z in range(0, imgmd.Pixels.get_SizeZ()):
-            imgarray[z, :, :, c] = rdr.read(c=c, z=z)
+    if n_stacks > 1 or n_col > 1:
+        imgarray = np.zeros((n_stacks,
+                             imgmd.Pixels.get_SizeX(),
+                             imgmd.Pixels.get_SizeY(),
+                             n_col))
+
+        # read in the image into the array
+        for c in range(0, imgmd.Pixels.get_channel_count()):
+            for z in range(0, imgmd.Pixels.get_SizeZ()):
+                imgarray[z, :, :, c] = rdr.read(c=c, z=z)
+    else:
+        imgarray = rdr.read()
+
     if verbose:
         print("Image size: %3d x %3d x %3d x %3d" % imgarray.shape)
     return imgarray
