@@ -7,7 +7,9 @@ from skimage.util import img_as_ubyte
 from ..transform.process import threshold_img
 from ..base.future_versions import regionprops_table
 
-KEYS = ['area', 'centroid',
+KEYS = ['area',
+        'mean_intensity',
+        'centroid',
         'convex_area', 'eccentricity',
         'equivalent_diameter',
         'euler_number', 'filled_area',
