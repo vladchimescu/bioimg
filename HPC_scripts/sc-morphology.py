@@ -77,3 +77,4 @@ if __name__ == '__main__':
 
     X_out.to_csv(os.path.join(outdir, well + '.csv'),
                  index=False)
+    javabridge.kill_vm()
