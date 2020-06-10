@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 import numpy as np
+from collections import namedtuple
 
+Box = namedtuple('Box', 'xmin xmax ymin ymax')
 
-def make_bbox(feats, rmax, cmax, pad):
+def make_bbox(feats, columns, rmax, cmax, pad):
     '''Make bounding boxes for labelled regions
        ----------------------------------------
        Make a list of bounding box coordinates from
@@ -30,18 +32,20 @@ def make_bbox(feats, rmax, cmax, pad):
     bbox = []
     for i in range(len(feats)):
         if type(feats) == np.ndarray:
-            ymin, xmin, ymax, xmax = feats[i]
+            #ymin, xmin, ymax, xmax = feats[i]
+            bx = Box(**{k:v for k,v in zip(columns, feats[i])})
         elif type(feats) == list:
-            ymin, xmin, ymax, xmax = feats[i].bbox
-        bb = np.array((max(0, xmin - pad),
-                       min(xmax + pad, cmax - 1),
-                       max(0, ymin - pad),
-                       min(ymax + pad, rmax - 1)))
+            #ymin, xmin, ymax, xmax = feats[i].bbox
+            bx = Box(**{k:v for k,v in zip(columns, feats[i].bbox)})
+        bb = np.array((max(0, bx.xmin - pad),
+                       min(bx.xmax + pad, cmax - 1),
+                       max(0, bx.ymin - pad),
+                       min(bx.ymax + pad, rmax - 1)))
         bbox.append(bb)
     return bbox
 
 
-def read_bbox(df, rmax, cmax, columns=['bbox-0', 'bbox-1', 'bbox-2', 'bbox-3'],
+def read_bbox(df, rmax, cmax, columns=['ymin', 'xmin', 'ymax', 'xmax'],
               pad=0):
     '''Extract bounding boxes from DataFrame
        -------------------------------------
@@ -56,6 +60,9 @@ def read_bbox(df, rmax, cmax, columns=['bbox-0', 'bbox-1', 'bbox-2', 'bbox-3'],
            Maximum height of an image
        cmax : int
            Maximum width of an image
+       columns : list
+           List of column names. Should specify
+           the order of xmin, xmax, ymin, ymax
        pad : int
            Padding value for the bounding boxes
 
@@ -66,8 +73,9 @@ def read_bbox(df, rmax, cmax, columns=['bbox-0', 'bbox-1', 'bbox-2', 'bbox-3'],
            (xmin, xmax, ymin, ymax) tuples
     '''
     bbox_array = df[columns].values
-
+    bbox_array = bbox_array.astype(np.int)
     bbox = make_bbox(feats=bbox_array,
+                     columns=columns,
                      rmax=rmax, cmax=cmax,
                      pad=pad)
     return bbox
