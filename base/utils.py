@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Microscopy image input/output functions
 Author: Vladislav Kim

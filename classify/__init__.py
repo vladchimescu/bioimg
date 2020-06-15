@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from .generic import ImgX, glcm_to_dataframe, compute_region_props
 from .random_forest import IncrementalClassifier
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Image processing functions such as
 brightness, contrast adjustment, Gaussian blur, etc
@@ -50,11 +50,11 @@ def threshold_img(img, method='yen', binary=False):
     if np.sum(img_ret) < 1e-18:
         return img_ret
 
-    if method is 'yen':
+    if method == 'yen':
         img_ret[img_ret < skimage.filters.threshold_yen(img)] = 0
-    elif method is 'otsu':
+    elif method == 'otsu':
         img_ret[img_ret < skimage.filters.threshold_otsu(img)] = 0
-    elif method is 'triangle':
+    elif method == 'triangle':
         img_ret[img_ret < skimage.filters.threshold_triangle(img)] = 0
 
     if binary:

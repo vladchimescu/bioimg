@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Classical computer vision segmentation algorithms
 such as watershed or spot detection
@@ -260,9 +260,9 @@ def get_circle_centers(spots, shape):
 def segment_surface_marker(img, ch, spots, thresh='triangle',
                            disk_size=7, sigma=200, rmbg=False):
     bgsub = img[:, :, ch]
-    print "Channel: " + str(ch)
+    print("Channel: " + str(ch))
     if rmbg:
-        print "Background subtraction in channel " + str(ch)
+        print("Background subtraction in channel " + str(ch))
         bg = gaussian(img[:, :, ch], sigma=sigma)
         bgsub = img[:, :, ch] - bg + np.mean(bg)
         # check if negative values are introduced by background subtraction
