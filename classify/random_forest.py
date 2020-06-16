@@ -129,5 +129,5 @@ class IncrementalClassifier:
         hf.create_dataset(group + '/Xtrain', data=self.Xtrain)
         hf.create_dataset(group + '/ytrain', data=self.ytrain.argmax(axis=1))
         hf.create_dataset(group + '/columns',
-                          data=self.Xtrain.columns.values.tolist())
+                          data=self.Xtrain.columns.values.astype('S').tolist())
         hf.close()
