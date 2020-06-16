@@ -4,3 +4,8 @@
 .\#*
 *.pyc
 *.ipynb_checkpoints
+Jupyter/
+figures/
+imgdata/
+data/
+R/
