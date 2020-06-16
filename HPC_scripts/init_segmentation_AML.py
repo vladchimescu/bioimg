@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Script for generating initial segmentation maps
 in leukemia entities in HPC environment
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     path = sys.argv[1]
     # plate identifier (e.g. '180528_Plate3')
     plate = sys.argv[2]
-    print "Processing plate: " + str(plate)
+    print("Processing plate: " + str(plate))
 
     # image name
     fname = sys.argv[3] + '.tiff'

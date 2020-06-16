@@ -1,4 +1,4 @@
-#!/usr//bin/env python
+#!/usr//bin/env python3
 '''
 Script for single-cell morphology feature
 extraction from viable leukemia cells
@@ -17,7 +17,9 @@ from base.utils import load_imgstack
 from segment.tools import read_bbox
 
 
-def get_train_instance(path, fname, columns=['ymin', 'xmin', 'ymax', 'xmax'], pad=0):
+def get_train_instance(path, fname,
+                       columns=['ymin', 'xmin', 'ymax', 'xmax'],
+                       pad=0):
     imgstack = load_imgstack(fname=os.path.join(path, fname + ".png"),
                              verbose=False)
     img = np.squeeze(imgstack)
@@ -37,7 +39,7 @@ if __name__ == '__main__':
     # plate identifier (e.g. '180528_Plate3')
     plate = sys.argv[2]
     wellnum = int(sys.argv[3]) - 1
-    print "Processing plate: " + str(plate)
+    print("Processing plate: " + str(plate))
     platedir = os.path.join(path, plate)
     imgs = [f.replace('.csv', '') for f in os.listdir(platedir) if '.csv' in f]
     # load plate annotation table

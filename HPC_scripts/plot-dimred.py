@@ -1,4 +1,4 @@
-#!/usr//bin/env python
+#!/usr//bin/env python3
 '''
 Script for plotting T-SNE and UMAP based
 on image features
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     path = 'imgdata/'
     # plate identifier (e.g. '180528_Plate3')
     plate = sys.argv[1]
-    print "Processing plate: " + str(plate)
+    print("Processing plate: " + str(plate))
     # load plate annotation table
     annot_df = pd.read_csv('Jupyter/data/AML_trainset/drugannot.txt',
                            sep='\t')
