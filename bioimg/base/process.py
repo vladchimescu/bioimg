@@ -4,8 +4,6 @@ Image processing functions such as
 brightness, contrast adjustment, Gaussian blur, etc
 
 Author: Vladislav Kim
-
-TO-DO: add gamma correction function (for an image stack)
 """
 import scipy.ndimage as nd
 import numpy as np
@@ -15,36 +13,31 @@ from skimage import morphology
 from skimage.morphology import disk
 
 
-# edit this function so that it can adjust contrast
-# either in a single image or in an image stack
-def adjust_contrast(img_stack, medf_size=7):
-    img_stack_adj = np.zeros_like(img_stack)
-    for z in range(img_stack.shape[0]):
-        if np.any(img_stack[z]):
-            img_stack_adj[z] = nd.filters.median_filter(
-                exposure.equalize_adapthist(img_stack[z]), size=medf_size)
-    return img_stack_adj
-
-
-def tophat_stack(imgstack, size=5):
-    img_f = np.zeros_like(imgstack)
-    for z in range(imgstack.shape[0]):
-        img_f[z] = morphology.white_tophat(imgstack[z], disk(size))
-    return img_f
-
-# edit and merge these two functions so that
-# thresholding can work on either a single optical section
-# or an image stack
-
-
-def threshold_stack(imgstack):
-    img_ret = np.copy(imgstack)
-    for z in range(imgstack.shape[0]):
-        img_ret[z][img_ret[z] < skimage.filters.threshold_yen(imgstack[z])] = 0
-    return img_ret
-
-
 def threshold_img(img, method='yen', binary=False):
+    '''Apply thresholding to a greyscale image
+       ---------------------------------------
+       Threshold an image and return either a binary image
+       or the transformed image with only foreground pixels with
+       non-zero values
+
+       Parameters
+       ----------
+       img : np.array
+           Input image, greyscale 2D
+       method : string
+           One of 'yen', 'otsu', 'triangle'. See the documentation
+           (https://scikit-image.org/docs/stable/api/skimage.filters.html)
+       binary : bool
+           Return a binary image (0: background, 1: foreground).
+           Otherwise the image is multiplied elementwise with the
+           binary mask (background pixels are set to zero).
+
+       Returns
+       -------
+       img_ret : np.array
+           An image with background pixels set to zero and
+           only foreground pixels with non-zero values
+    '''
     img_ret = np.copy(img)
 
     if np.sum(img_ret) < 1e-18:
@@ -62,22 +55,89 @@ def threshold_img(img, method='yen', binary=False):
     return img_ret
 
 
+def adjust_contrast(img_stack, medf_size=7):
+    '''Adjust contrast of an image stack using CLAHE
+       ---------------------------------------------
+       Parameters
+       ----------
+       img_stack : np.array
+           Image stack. The assumed order is (z,x,y)
+       medf_size : int
+           Size of window for median filter
+       
+       Returns
+       -------
+       img_adj : np.array
+           Contrast-adjusted image stack
+    '''
+    img_stack_adj = np.zeros_like(img_stack)
+    for z in range(img_stack.shape[0]):
+        if np.any(img_stack[z]):
+            img_stack_adj[z] = nd.filters.median_filter(
+                exposure.equalize_adapthist(img_stack[z]), size=medf_size)
+    return img_stack_adj
+
 def smooth_img(img_stack, medf_size=7):
+    '''Apply median filter to smooth an image stack
+       --------------------------------------------
+       Parameters
+       ----------
+       img_stack : np.array
+           Image stack. The assumed order is (z,x,y)
+       medf_size : int
+           Size of window for median filter
+       
+       Returns
+       -------
+       img_adj : np.array
+           Median-filtered image stack
+    '''
     img_smooth = np.zeros_like(img_stack)
     for z in range(img_stack.shape[0]):
         img_smooth[z] = nd.filters.median_filter(img_stack[z], size=medf_size)
     return img_smooth
 
 
-def elevation_map(img, sigma=1):
-    LoG_calc = np.zeros_like(img)
-    for z in range(img.shape[0]):
-        LoG_calc[z] = nd.gaussian_laplace(img[z], sigma=sigma)
-    return LoG_calc
+def tophat_stack(imgstack, size=5):
+    '''Apply white tophat filter to an image stack
+       -------------------------------------------
+       Parameters
+       ----------
+       img_stack : np.array
+           Image stack. The assumed order is (z,x,y)
+       size : int
+           (Morphological) disk size
+       
+       Returns
+       -------
+       img_f : np.array
+           White-tophat filtered image stack
+    '''
+    img_f = np.zeros_like(imgstack)
+    for z in range(imgstack.shape[0]):
+        img_f[z] = morphology.white_tophat(imgstack[z], disk(size))
+    return img_f
 
 
-# filtering out high-frequency components by FFT based on fixed thresholds
 def filter_highfreq(img, keep=0.2):
+    '''Filter out high-frequency components by FFT
+       -------------------------------------------
+       Basic filtering in Fourier domain
+       
+       Parameters
+       ----------
+       img : np.array
+           Input image (greyscale 2D)
+       keep : float
+           A float in range (0,1), specifying the
+           fraction of low-frequency components
+           to keep
+
+       Returns
+       -------
+       img_f : np.array
+           Image filtered in Fourier domain
+    '''
     im_fft = np.fft.fft2(img)
     im_fft2 = im_fft.copy()
     r, c = im_fft2.shape

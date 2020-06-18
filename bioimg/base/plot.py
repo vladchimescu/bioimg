@@ -11,22 +11,30 @@ color_dict = {'red': 0, 'orange': 0.1,
               'purple': 0.8, 'magenta': 0.9,
               'white': None}
 
-
-def plot_gallery(images, titles, h, w, c, n_row=3, n_col=4):
-    """Helper function to plot a gallery of image instances"""
-    plt.figure(figsize=(1.8 * n_col, 2.4 * n_row))
-    plt.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
-    for i in range(n_row * n_col):
-        plt.subplot(n_row, n_col, i + 1)
-        plt.imshow(images[i].reshape((h, w, c)))
-        plt.title(titles[i], size=12)
-        plt.xticks(())
-        plt.yticks(())
-    plt.show()
-
-
 def plot_channels(images, nrow, ncol, titles=None,
                   scale_x=4, scale_y=4, cmap=None):
+    '''Plot images as a grid of subplots
+       ---------------------------------
+       A list of image arrays is plotted in a matrix layout
+
+       Parameters
+       ----------
+       images : list
+           List of np.array (image arrays). Ararys can be
+           either greyscale or color 2D images
+       nrow : int
+           Number of rows
+       ncol : int
+           Numbr of columns
+       titles : list or array
+           List-like, plot subtitles
+       scale_x : int
+           Figure width parameter: w = scale_x * ncol
+       scale_y : int
+           Figure height parameter: h = scale_y * nrow
+       cmap : string
+           Name of the matplotlib colormap. Default to viridis
+    '''
     plt.figure(figsize=(scale_x * ncol, scale_y * nrow))
     plt.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
     for i in range(len(images)):
@@ -53,6 +61,24 @@ def colorize(image, hue, saturation=1):
 
 
 def combine_channels(images, colors, blend=None, gamma=None):
+    '''Plot images as an RGB overlay
+       ------------------------------
+       A list of image arrays is combined into a single
+       color image.
+
+       Parameters
+       ----------
+       images : list
+           List of np.array (image arrays). List elements are
+           interpreted as individual color channels
+       colors : list of strings
+           List of color names: one of red, orange, yellow,
+           green, cyan, blue, purple, magenta, white
+       blend : list of floats (optional)
+           Controls color blending in the image overlay
+       gamma : list or array (optional)
+           Gamma correction factor for individual images
+     '''
     if blend is None:
         blend = [0.5] * len(images)
     if gamma is not None:
