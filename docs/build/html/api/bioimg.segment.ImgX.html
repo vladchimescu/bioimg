@@ -1,0 +1,214 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bioimg.segment.ImgX &#8212; bioimg 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="bioimg.segment.compute_region_props" href="bioimg.segment.compute_region_props.html" />
+    <link rel="prev" title="bioimg.base.threshold_img" href="bioimg.base.threshold_img.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="bioimg.segment.compute_region_props.html" title="bioimg.segment.compute_region_props"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="bioimg.base.threshold_img.html" title="bioimg.base.threshold_img"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">bioimg 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="api.html" accesskey="U">API reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">bioimg.segment.ImgX</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="bioimg-segment-imgx">
+<h1>bioimg.segment.ImgX<a class="headerlink" href="#bioimg-segment-imgx" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="bioimg.segment.ImgX">
+<em class="property">class </em><code class="sig-prename descclassname">bioimg.segment.</code><code class="sig-name descname">ImgX</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">img</span></em>, <em class="sig-param"><span class="n">bbox</span></em>, <em class="sig-param"><span class="n">n_chan</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">y</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#bioimg.segment.ImgX" title="Permalink to this definition">¶</a></dt>
+<dd><p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">imgx_test</span> <span class="o">=</span> <span class="n">ImgX</span><span class="p">(</span><span class="n">img</span><span class="o">=</span><span class="n">img</span><span class="o">**</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span> <span class="n">n_chan</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">imgx_test</span> <span class="o">=</span> <span class="n">imgx_test</span><span class="o">.</span><span class="n">compute_props</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># or initialize with channel names as n_chan argument</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">imgx_test</span> <span class="o">=</span> <span class="n">ImgX</span><span class="p">(</span><span class="n">img</span><span class="o">=</span><span class="n">img</span><span class="o">**</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">,</span>
+<span class="go">                     n_chan=[&#39;hoechst&#39;, &#39;ly&#39;, &#39;calcein&#39;])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">imgx_test</span> <span class="o">=</span> <span class="n">imgx_test</span><span class="o">.</span><span class="n">compute_props</span><span class="p">()</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>img</strong><span class="classifier">array</span></dt><dd><p>Input array can be a greyscale or color 2D image. 
+The assumed order is (x,y,c), i.e. color axis is last.</p>
+</dd>
+<dt><strong>bbox</strong><span class="classifier">list of arrays</span></dt><dd><p>Bounding boxes of individual segmented regions (e.g. cells)</p>
+</dd>
+<dt><strong>n_chan</strong><span class="classifier">int or array-like</span></dt><dd><p>Number of color channels or list of color channel names. 
+Default: greyscale (<cite>n_chan=None</cite>)</p>
+</dd>
+<dt><strong>y</strong><span class="classifier">array-like (optional)</span></dt><dd><p>Labels of bounding boxes (e.g. could be cell types)</p>
+</dd>
+<dt><strong>data</strong><span class="classifier">dict or DataFrame</span></dt><dd><p>Morphological data with regions (e.g. cells) in rows and
+features in columns. If channel names are provided, these are
+prepended to column names, else columns are prefixed with ‘ch-x’ 
+where ‘x’ is the order of the channel in the image array</p>
+</dd>
+<dt><strong>target_names</strong><span class="classifier">array-like (optional)</span></dt><dd><p>Class names of provided labels (<cite>y</cite>).
+If <cite>y</cite> is provided as array of integers (e.g. 0 - cell type A and
+(1 - cell type B) then target_names = [‘cell A’, ‘cell B’]</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 88%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>compute_props(split=True)</strong></p></td>
+<td><p>Computes morphological properties for each segmented region. If <cite>split=True</cite> and the input image is multichannel then features are computed for each color channel separately, (i.e. the channels are split)</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="bioimg.segment.ImgX.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">img</span></em>, <em class="sig-param"><span class="n">bbox</span></em>, <em class="sig-param"><span class="n">n_chan</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">y</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#bioimg.segment.ImgX.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>img</strong><span class="classifier">array</span></dt><dd><p>Input array can be a greyscale or color 2D image. 
+The assumed order is (x,y,c), i.e. color axis is last.</p>
+</dd>
+<dt><strong>bbox</strong><span class="classifier">list of arrays</span></dt><dd><p>Bounding boxes of individual segmented regions (e.g. cells)</p>
+</dd>
+<dt><strong>n_chan</strong><span class="classifier">int or array-like</span></dt><dd><p>Number of color channels or list of color channel names. 
+Default: greyscale (<cite>n_chan=None</cite>)</p>
+</dd>
+<dt><strong>y</strong><span class="classifier">array-like (optional)</span></dt><dd><p>Labels of bounding boxes (e.g. could be cell types)</p>
+</dd>
+<dt><strong>data</strong><span class="classifier">dict or DataFrame</span></dt><dd><p>Morphological data with regions (e.g. cells) in rows and
+features in columns. If channel names are provided, these are
+prepended to column names, else columns are prefixed with ‘ch-x’ 
+where ‘x’ is the order of the channel in the image array</p>
+</dd>
+<dt><strong>target_names</strong><span class="classifier">array-like (optional)</span></dt><dd><p>Class names of provided labels (<cite>y</cite>).
+If <cite>y</cite> is provided as array of integers (e.g. 0 - cell type A and
+(1 - cell type B) then target_names = [‘cell A’, ‘cell B’]</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#bioimg.segment.ImgX.__init__" title="bioimg.segment.ImgX.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(self, img, bbox[, n_chan, y])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_props</span></code>(self[, split])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="bioimg.base.threshold_img.html"
+                        title="previous chapter">bioimg.base.threshold_img</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="bioimg.segment.compute_region_props.html"
+                        title="next chapter">bioimg.segment.compute_region_props</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/bioimg.segment.ImgX.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="bioimg.segment.compute_region_props.html" title="bioimg.segment.compute_region_props"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="bioimg.base.threshold_img.html" title="bioimg.base.threshold_img"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">bioimg 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="api.html" >API reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">bioimg.segment.ImgX</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Vladislav Kim.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.1.1.
+    </div>
+  </body>
+</html>

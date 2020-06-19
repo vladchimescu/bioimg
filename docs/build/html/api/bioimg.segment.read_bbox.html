@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bioimg.segment.read_bbox &#8212; bioimg 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="bioimg.segment.IncrementalClassifier" href="bioimg.segment.IncrementalClassifier.html" />
+    <link rel="prev" title="bioimg.segment.compute_region_props" href="bioimg.segment.compute_region_props.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="bioimg.segment.IncrementalClassifier.html" title="bioimg.segment.IncrementalClassifier"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="bioimg.segment.compute_region_props.html" title="bioimg.segment.compute_region_props"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">bioimg 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="api.html" accesskey="U">API reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">bioimg.segment.read_bbox</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="bioimg-segment-read-bbox">
+<h1>bioimg.segment.read_bbox<a class="headerlink" href="#bioimg-segment-read-bbox" title="Permalink to this headline">¶</a></h1>
+<dl class="py function">
+<dt id="bioimg.segment.read_bbox">
+<code class="sig-prename descclassname">bioimg.segment.</code><code class="sig-name descname">read_bbox</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">df</span></em>, <em class="sig-param"><span class="n">rmax</span></em>, <em class="sig-param"><span class="n">cmax</span></em>, <em class="sig-param"><span class="n">columns</span><span class="o">=</span><span class="default_value">['ymin', 'xmin', 'ymax', 'xmax']</span></em>, <em class="sig-param"><span class="n">pad</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#bioimg.segment.read_bbox" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">DataFrame</span></dt><dd><p>DataFrame of RegionProperties</p>
+</dd>
+<dt><strong>rmax</strong><span class="classifier">int</span></dt><dd><p>Maximum height of an image</p>
+</dd>
+<dt><strong>cmax</strong><span class="classifier">int</span></dt><dd><p>Maximum width of an image</p>
+</dd>
+<dt><strong>columns</strong><span class="classifier">list</span></dt><dd><p>List of column names. Should specify
+the order of xmin, xmax, ymin, ymax</p>
+</dd>
+<dt><strong>pad</strong><span class="classifier">int</span></dt><dd><p>Padding value for the bounding boxes</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>bbox</strong><span class="classifier">list</span></dt><dd><p>List of bounding box coordinates in
+(xmin, xmax, ymin, ymax) tuples</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="bioimg.segment.compute_region_props.html"
+                        title="previous chapter">bioimg.segment.compute_region_props</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="bioimg.segment.IncrementalClassifier.html"
+                        title="next chapter">bioimg.segment.IncrementalClassifier</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/bioimg.segment.read_bbox.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="bioimg.segment.IncrementalClassifier.html" title="bioimg.segment.IncrementalClassifier"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="bioimg.segment.compute_region_props.html" title="bioimg.segment.compute_region_props"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">bioimg 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="api.html" >API reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">bioimg.segment.read_bbox</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Vladislav Kim.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.1.1.
+    </div>
+  </body>
+</html>

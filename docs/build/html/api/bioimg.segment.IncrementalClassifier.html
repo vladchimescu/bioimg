@@ -1,0 +1,232 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bioimg.segment.IncrementalClassifier &#8212; bioimg 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="bioimg.segment.read_bbox" href="bioimg.segment.read_bbox.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="bioimg.segment.read_bbox.html" title="bioimg.segment.read_bbox"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">bioimg 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="api.html" accesskey="U">API reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">bioimg.segment.IncrementalClassifier</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="bioimg-segment-incrementalclassifier">
+<h1>bioimg.segment.IncrementalClassifier<a class="headerlink" href="#bioimg-segment-incrementalclassifier" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="bioimg.segment.IncrementalClassifier">
+<em class="property">class </em><code class="sig-prename descclassname">bioimg.segment.</code><code class="sig-name descname">IncrementalClassifier</code><a class="headerlink" href="#bioimg.segment.IncrementalClassifier" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>imgx</strong><span class="classifier">ImgX object</span></dt><dd><p>Labelled image instance with the intensity image and
+segmentation (bounding boxes of ROIs)</p>
+</dd>
+<dt><strong>newlabels</strong><span class="classifier">array-like</span></dt><dd><p>Array or list of new training instances</p>
+</dd>
+<dt><strong>Xtrain</strong><span class="classifier">np.array</span></dt><dd><p>Train data with observations (e.g. cells) in rows
+and morphological features in columns</p>
+</dd>
+<dt><strong>ytrain</strong><span class="classifier">np.array</span></dt><dd><p>List or array of labels</p>
+</dd>
+<dt><strong>clf</strong><span class="classifier">sklearn classifier</span></dt><dd><p>Classifier model. Default is RandomForestClassifier in
+one-vs-rest mode. For details see the documentation:
+(<a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html">https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html</a>)</p>
+</dd>
+<dt><strong>classes</strong><span class="classifier">array-like</span></dt><dd><p>List of class names, e.g. [‘cell A’, ‘cell B’, ‘cell C’]</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 68%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>set_param(**kwargs)</strong></p></td>
+<td><p>Change any of the class attributes that have been set</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>set_classifier(clf=None)</strong></p></td>
+<td><p>Initializes a classifier object</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>add_instances(newlabels)</strong></p></td>
+<td><p>Add new training instances</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>train_classifier()</strong></p></td>
+<td><p>Train a classifier with the current training data</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>generate_predictions()</strong></p></td>
+<td><p>Generate predictions after the classifier has been trained.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>plot_predictions()</strong></p></td>
+<td><p>Plot predictions using plotly interactive visualization</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>h5_write(fname, group)</strong></p></td>
+<td><p>Write the train set as HDF5 file</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="bioimg.segment.IncrementalClassifier.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em><span class="sig-paren">)</span><a class="headerlink" href="#bioimg.segment.IncrementalClassifier.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>imgx</strong><span class="classifier">ImgX object</span></dt><dd><p>Labelled image instance with the intensity image and
+segmentation (bounding boxes of ROIs)</p>
+</dd>
+<dt><strong>newlabels</strong><span class="classifier">array-like</span></dt><dd><p>Array or list of new training instances</p>
+</dd>
+<dt><strong>Xtrain</strong><span class="classifier">np.array</span></dt><dd><p>Train data with observations (e.g. cells) in rows
+and morphological features in columns</p>
+</dd>
+<dt><strong>ytrain</strong><span class="classifier">np.array</span></dt><dd><p>List or array of labels</p>
+</dd>
+<dt><strong>clf</strong><span class="classifier">sklearn classifier</span></dt><dd><p>Classifier model. Default is RandomForestClassifier in
+one-vs-rest mode. For details see the documentation:
+(<a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html">https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html</a>)</p>
+</dd>
+<dt><strong>classes</strong><span class="classifier">array-like</span></dt><dd><p>List of class names, e.g. [‘cell A’, ‘cell B’, ‘cell C’]</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#bioimg.segment.IncrementalClassifier.__init__" title="bioimg.segment.IncrementalClassifier.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(self)</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_instances</span></code>(self, newlabels)</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_predictions</span></code>(self[, prob])</p></td>
+<td><p>Generate predictions after the model was fit The function runs sklearn.clf.predict() on the currently loaded <cite>imgx</cite> instance</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">h5_write</span></code>(self, fname, group)</p></td>
+<td><p>Write current train set as HDF5 file</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_predictions</span></code>(self)</p></td>
+<td><p>Plot predictions over the original image The function generates an interactive visualization with plotly.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_classifier</span></code>(self[, clf])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_param</span></code>(self, **kwargs)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">train_classifier</span></code>(self)</p></td>
+<td><p>Fit a supervised model to the current training data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">train_error</span></code>(self)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="bioimg.segment.read_bbox.html"
+                        title="previous chapter">bioimg.segment.read_bbox</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/bioimg.segment.IncrementalClassifier.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="bioimg.segment.read_bbox.html" title="bioimg.segment.read_bbox"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">bioimg 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="api.html" >API reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">bioimg.segment.IncrementalClassifier</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Vladislav Kim.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.1.1.
+    </div>
+  </body>
+</html>
