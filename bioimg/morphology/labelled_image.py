@@ -5,6 +5,8 @@ from skimage.color import rgb2gray
 from skimage.feature import greycomatrix, greycoprops
 from skimage.measure import regionprops_table
 from skimage.util import img_as_ubyte
+from skimage.transform import resize
+import mahotas as mht
 from ..base.process import threshold_img
 
 KEYS = ['area',
@@ -28,6 +30,10 @@ KEYS = ['area',
 GLCM_PROPS = ['contrast', 'dissimilarity',
               'homogeneity',
               'ASM', 'energy', 'correlation']
+
+F_HARALICK = """AngularSecondMoment Contrast Correlation Variance
+                    InverseDifferenceMoment SumAverage SumVariance SumEntropy Entropy
+                    DifferenceVariance DifferenceEntropy InfoMeas1 InfoMeas2""".split()
 
 
 def glcm_to_dataframe(glcm, prop):
@@ -53,10 +59,69 @@ def glcm_to_dataframe(glcm, prop):
     return pd.DataFrame(mat.ravel().reshape(1, -1),
                         columns=columns)
 
+def compute_haralick(cell, d):
+    '''Compute Haralick texture features
+       ---------------------------------
+
+       Parameters
+       ----------
+       cell : image array
+           image patch (e.g. bounding box of a cell, organoid, etc)
+       d : int
+           pixel distance for grey-level co-occurence matrix computation
+       
+       Returns
+       -------
+       df : DataFrame
+           DataFrame with 13 Haralick texture features calculated for
+           4 spatial directions (in 2D)
+    '''
+    names = [x + '-d' + str(d) + '-' + str(y) for y in range(4) for x in F_HARALICK]
+    values = mht.features.haralick(img_as_ubyte(cell),
+                                   distance=d,
+                                   ignore_zeros=True).ravel()
+
+    return pd.DataFrame({k : [v] for k,v in zip(names, values)})
+
+def compute_zernike(cell, r=12, deg=12, w=40, h=40):
+    '''Compute Zernike moments
+       -----------------------
+
+       Parameters
+       ----------
+       cell : image array
+           image patch (e.g. bounding box of a cell, organoid, etc).
+           By default, the input image is rescaled to (w=40,h=40) patch
+           and Zernike moments are evaluated on the rescaled image.
+           See w, h arguments
+       r : int
+           maximum radius, in pixels, of Zernike polynomials
+       deg : int
+           degree of Zernike polynomials
+       w : int
+           width of the rescaled image patch
+       h : int
+           height of the rescaled image patch
+
+       Returns
+       -------
+       df : DataFrame
+           DataFrame with Zernike moments
+    '''
+    cell_norm = resize(cell, (w, h), anti_aliasing=True)
+    values = mht.features.zernike_moments(img_as_ubyte(cell_norm),
+                                          radius=r, degree=deg)
+    names = ['zernike' + '-r' + str(r) + '-' + str(i) for i in range(len(values))]
+    return pd.DataFrame({k : [v] for k,v in zip(names, values)})
+
 
 def compute_region_props(cell, keys=KEYS,
+                         texture='glcm',
+                         zernike=True,
                          distances=[3, 5, 7],
-                         angles=[0, np.pi/4, np.pi/2, 3*np.pi/4]):
+                         angles=[0, np.pi/4, np.pi/2, 3*np.pi/4],
+                         zernike_radii=[10,12],
+                         zernike_deg=12):
     '''Compute region properties
        -------------------------
        Compute morphological properties for the provided region
@@ -71,12 +136,25 @@ def compute_region_props(cell, keys=KEYS,
            mean_intensity, eccentricity, image moments, etc).
            See the documentation of skimage.measure
            (https://scikit-image.org/docs/dev/api/skimage.measure.html)
+       texture : string
+           Possible values are ['glcm', 'haralick', 'both']. If 'glcm' is
+           chosen (default), texture features are computed using
+           skimage.feature.greycoprops. Option 'haralick' computes
+           13 Haralick features for 4 spatial directions (total 52 features)
+           using mahotas.features.haralick. If 'both', then both Haralick and
+           skimage texture features are computed
+       zernike : bool
+           Compute Zernike moments (default `True`)
        distance : list of ints
            List of pixel pair distance offsets, passed to
            skimage.feature.greycomatrix
        angles : list of floats
            List of pixel pair angles in radians, passed to
            skimage.feature.greycomatrix
+       zernike_radii : array-like
+           List of radii for Zernike polynomial evaluation
+       zernike_deg : int
+           Highest degree of Zernike polynomials to compute
 
        Returns
        -------
@@ -84,16 +162,26 @@ def compute_region_props(cell, keys=KEYS,
            DataFrame with morphological properties
     '''
     bw = threshold_img(cell, method='otsu', binary=True)
-    df = pd.DataFrame(regionprops_table(bw.astype('int'),
+    cell_th = threshold_img(cell, method='otsu', binary=False)
+    prop_df = pd.DataFrame(regionprops_table(bw.astype('int'),
                                         cell, properties=keys))
-
-    glcm = greycomatrix(img_as_ubyte(cell),
+    if texture == 'glcm' or texture == 'both':
+        glcm = greycomatrix(img_as_ubyte(cell_th),
                         distances=distances,
                         angles=angles)
-    texture_df = pd.concat([glcm_to_dataframe(glcm, prop=p)
-                            for p in GLCM_PROPS], axis=1)
-
-    return pd.concat([df, texture_df], axis=1)
+        texture_df = pd.concat([glcm_to_dataframe(glcm, prop=p)
+                                for p in GLCM_PROPS], axis=1)
+        prop_df = pd.concat([prop_df, texture_df], axis=1)
+        
+    if texture == 'haralick' or texture == 'both':
+        texture_df = pd.concat([compute_haralick(cell_th, d=d)
+                                for d in distances], axis=1)
+        prop_df = pd.concat([prop_df, texture_df], axis=1)
+    if zernike:
+        zernike_df = pd.concat([compute_zernike(cell_th, r=r, deg=zernike_deg)
+                                for r in zernike_radii], axis=1)
+        prop_df = pd.concat([prop_df, zernike_df], axis=1)
+    return prop_df
 
 
 class ImgX:
@@ -114,6 +202,10 @@ class ImgX:
            Default: greyscale (`n_chan=None`)
        y : array-like (optional)
            Labels of bounding boxes (e.g. could be cell types)
+       params : dict (optional)
+           Dictionary of parameters for morphological feature computation
+           passed to compute_region_props() function. The user can modify
+           the parameters before running `compute_props` method (see 'Examples')
        data : dict or DataFrame
            Morphological data with regions (e.g. cells) in rows and
            features in columns. If channel names are provided, these are
@@ -135,11 +227,14 @@ class ImgX:
        Examples
        --------
        >>> imgx_test = ImgX(img=img**0.4, bbox=bbox, n_chan=3)
+       >>> # change default texture features to Haralick (Mahotas implementation)
+       >>> imgx_test.params['texture'] = 'haralick'
        >>> imgx_test = imgx_test.compute_props()
        >>> # or initialize with channel names as n_chan argument
        >>> imgx_test = ImgX(img=img**0.4, bbox=bbox,
                             n_chan=['hoechst', 'ly', 'calcein'])
        >>> imgx_test = imgx_test.compute_props()
+       >>> img_df = imgx_test.get_df()
     '''
 
     def __init__(self, img, bbox, n_chan=None, y=None):
@@ -173,6 +268,12 @@ class ImgX:
 
         self.data = dict()
         self.target_names = None
+        self.params = {'texture' : 'glcm',
+                         'zernike': True,
+                         'distances': [3, 5, 7],
+                         'angles': [0, np.pi/4, np.pi/2, 3*np.pi/4],
+                         'zernike_radii': [10,12],
+                         'zernike_deg': 12}
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
@@ -180,7 +281,7 @@ class ImgX:
     def _get_features(self, img, c=None):
         # compute features for all the bboxes
         cellbb = [img[x[2]:x[3], x[0]:x[1]] for x in self.bbox]
-        data_list = [compute_region_props(cell=cell) for cell in cellbb]
+        data_list = [compute_region_props(cell=cell, **self.params) for cell in cellbb]
         # all region and GLCM properties for each 'cellbb'
         prop_df = pd.concat(data_list)
         if c is not None:
@@ -220,9 +321,17 @@ class ImgX:
         if self.n_chan is None or split is False:
             img_gray = rgb2gray(self.img)
             self._get_features(img=img_gray)
-
-        if len(self.data) > 1:
-            self.data = pd.concat(self.data, axis=1)
-            self.data.columns = self.data.columns.droplevel()
-
         return self
+
+    def get_df(self):
+        '''Returns DataFrame with image features
+           -------------------------------------
+           Run this function after `compute_props` to
+           return a copy of image data as pandas.DataFrame
+        '''
+        if type(self.data) == dict and len(self.data) > 1:
+            df = pd.concat(self.data, axis=1)
+            df.columns = df.columns.droplevel()
+        if type(self.data) == pd.DataFrame:
+            df = self.data.copy()
+        return df
