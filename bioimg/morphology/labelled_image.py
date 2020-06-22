@@ -118,6 +118,7 @@ def compute_zernike(cell, r=12, deg=12, w=40, h=40):
 def compute_region_props(cell, keys=KEYS,
                          texture='glcm',
                          zernike=True,
+                         thresh=False,
                          distances=[3, 5, 7],
                          angles=[0, np.pi/4, np.pi/2, 3*np.pi/4],
                          zernike_radii=[10,12],
@@ -145,6 +146,9 @@ def compute_region_props(cell, keys=KEYS,
            skimage texture features are computed
        zernike : bool
            Compute Zernike moments (default `True`)
+       thresh : bool
+           Threshold image before texture features and Zernike moments
+           are calculated. Default: `False`
        distance : list of ints
            List of pixel pair distance offsets, passed to
            skimage.feature.greycomatrix
@@ -162,11 +166,13 @@ def compute_region_props(cell, keys=KEYS,
            DataFrame with morphological properties
     '''
     bw = threshold_img(cell, method='otsu', binary=True)
-    cell_th = threshold_img(cell, method='otsu', binary=False)
     prop_df = pd.DataFrame(regionprops_table(bw.astype('int'),
                                         cell, properties=keys))
+    if thresh:
+        cell = threshold_img(cell, method='otsu', binary=False)
+    
     if texture == 'glcm' or texture == 'both':
-        glcm = greycomatrix(img_as_ubyte(cell_th),
+        glcm = greycomatrix(img_as_ubyte(cell),
                         distances=distances,
                         angles=angles)
         texture_df = pd.concat([glcm_to_dataframe(glcm, prop=p)
@@ -174,11 +180,11 @@ def compute_region_props(cell, keys=KEYS,
         prop_df = pd.concat([prop_df, texture_df], axis=1)
         
     if texture == 'haralick' or texture == 'both':
-        texture_df = pd.concat([compute_haralick(cell_th, d=d)
+        texture_df = pd.concat([compute_haralick(cell, d=d)
                                 for d in distances], axis=1)
         prop_df = pd.concat([prop_df, texture_df], axis=1)
     if zernike:
-        zernike_df = pd.concat([compute_zernike(cell_th, r=r, deg=zernike_deg)
+        zernike_df = pd.concat([compute_zernike(cell, r=r, deg=zernike_deg)
                                 for r in zernike_radii], axis=1)
         prop_df = pd.concat([prop_df, zernike_df], axis=1)
     return prop_df
@@ -270,6 +276,7 @@ class ImgX:
         self.target_names = None
         self.params = {'texture' : 'glcm',
                          'zernike': True,
+                         'thresh': False,
                          'distances': [3, 5, 7],
                          'angles': [0, np.pi/4, np.pi/2, 3*np.pi/4],
                          'zernike_radii': [10,12],
