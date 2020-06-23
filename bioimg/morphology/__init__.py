@@ -3,4 +3,6 @@ from .labelled_image import ImgX, glcm_to_dataframe, compute_region_props
 
 
 __all__ = ['ImgX', 'glcm_to_dataframe',
+           'compute_haralick',
+           'compute_zernike',
            'compute_region_props']
