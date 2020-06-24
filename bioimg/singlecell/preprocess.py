@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import pandas as pd
 import numpy as np
-from sklearn.feature_selection import VarianceThreshold
 from sklearn.feature_selection import RFE, SelectKBest, SelectFdr
 
 def scale_data(df, scaler):
@@ -64,4 +63,45 @@ def check_data(df, return_indices=False):
         return indices
 
 # feature selection
-# also implement feature selection based on replicate correlation
+def select_features(df, y, sel):
+    '''Perform feature selection
+       -------------------------
+       Perform feature selection and return a
+       DataFrame with the selected subset of features. 
+       Any of the sklearn.feature_selection
+       methods can be used such as SelectKBest,
+       SelectFdr, VarianceThreshold, etc.
+       For details see skimage.feature_selection documentation:
+       https://scikit-learn.org/stable/modules/classes.html#module-sklearn.feature_selection
+
+       Parameters
+       ----------
+       df : DataFrame
+           Input DataFrame with features in columns and
+           observations in rows
+       y : array-like or None
+           Response vector, maybe continuous or discrete
+       sel : feature selector
+           Primary feature selection methods that can be used
+           are SelectKBest and SelectFdr. The user initializes
+           sel object and passes it to the function (see Examples)
+
+       Returns
+       -------
+       df_out : DataFrame
+           DataFrame with subset features based on selection
+           criteria
+
+       Examples
+       --------
+       >>> from sklearn.feature_selection import SelectKBest, f_classif
+       >>> sel = SelectKBest(f_classif, k=100)
+       >>> # X, y are feature data and response vector, respectively
+       >>> X_subset = select_features(df=X, y=y, sel=sel)
+       
+    '''
+    if y is None:
+        df_out = sel.fit_transform(df)
+    else:
+        df_out = sel.fit_transform(df, y)
+    return pd.DataFrame(df_out, columns=df.columns[sel.get_support()])
