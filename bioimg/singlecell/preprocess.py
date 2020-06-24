@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-
-from sklearn.preprocessing import StandardScaler
+import pandas as pd
+import numpy as np
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.feature_selection import RFE, SelectKBest, SelectFdr
 
@@ -38,7 +38,6 @@ def scale_data(df, scaler):
     df_scaled = pd.DataFrame(scaler.transform(df), columns=df.columns)
     return df_scaled
 
-# quality control for rows and columns
 def check_data(df, return_indices=False):
     '''Check rows and columns of a DataFrame
        -------------------------------------

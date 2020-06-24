@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sn
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from ..base.plot import diverge_map
 
 
 def plot_dimred(X_df, dims='tsne',
@@ -209,3 +210,56 @@ def facet_boxplot(X_long, x, y,
             ax.set_ylabel('Standardized value')
         if i > ((nrows - 1) * ncols - 1):
             ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+
+
+def plot_heatmap(df,
+                 xticklabels=False,
+                 yticklabels=False,
+                  cmap=None,
+                 vmin=None, vmax=None,
+                 size=(6.5,6),
+                 cbar_pos=(1,.45,.03,.3),
+                 row_dendro=False,
+                 col_dendro=False):
+    '''Plot clustered heatmap
+       ----------------------
+    
+       Parameters
+       ----------
+       df : DataFrame
+           Input DataFrame
+       xticklabels : bool (optional)
+           Show column labels (default=False)
+       yticklabels : bool (optional)
+           Show row labels (default=False)
+       cmap : color map (optional)
+           Defaults to a diverging color map
+       vmin : float (optional)
+           minimum value of the color scale
+       vmax : float (optional)
+           maximum value of the color scale
+       size : tuple (optional)
+           figure size
+       cbar_pos : tuple (optional)
+           Position of the color bar
+       row_dendro : bool (optional)
+           Show dendrogram for rows
+       col_dendro : bool (optional)
+           Show dendrogram for columns
+    '''
+    if cmap is None:
+        cmap = diverge_map(low='teal', high='goldenrod')
+    if vmin is None:
+        vmin = df.to_numpy().min()
+    if vmax is None:
+        vmax = df.to_numpy().max()
+    ax = sn.clustermap(df,
+           xticklabels=xticklabels,
+           yticklabels=yticklabels,
+                  cmap=cmap,
+                 cbar_pos=cbar_pos,
+                  vmin=vmin,
+                  vmax=vmax,
+                  figsize=size)
+    ax.ax_row_dendrogram.set_visible(row_dendro)
+    ax.ax_col_dendrogram.set_visible(col_dendro)

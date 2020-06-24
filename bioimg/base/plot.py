@@ -4,6 +4,7 @@ Functions and classes for static plots
 """
 import matplotlib.pyplot as plt
 from skimage import color
+import matplotlib.colors as mcolors
 
 color_dict = {'red': 0, 'orange': 0.1,
               'yellow': 0.16, 'green': 0.3,
@@ -45,7 +46,6 @@ def plot_channels(images, nrow, ncol, titles=None,
         plt.xticks(())
         plt.yticks(())
     plt.show()
-
 
 def colorize(image, hue, saturation=1):
     """ Add color of the given hue to an RGB image.
@@ -124,3 +124,32 @@ def show_bbox(img, bbox, color='white', lw=2, size=12):
                             linewidth=lw, fill=False)
         ax.add_patch(rec)
     ax.axis('off')
+
+
+def make_colormap(seq):
+    """Return a LinearSegmentedColormap
+    seq: a sequence of floats and RGB-tuples. The floats should be increasing
+    and in the interval (0,1).
+    """
+    seq = [(None,) * 3, 0.0] + list(seq) + [1.0, (None,) * 3]
+    cdict = {'red': [], 'green': [], 'blue': []}
+    for i, item in enumerate(seq):
+        if isinstance(item, float):
+            r1, g1, b1 = seq[i - 1]
+            r2, g2, b2 = seq[i + 1]
+            cdict['red'].append([item, r1, r2])
+            cdict['green'].append([item, g1, g2])
+            cdict['blue'].append([item, b1, b2])
+    return mcolors.LinearSegmentedColormap('CustomMap', cdict)
+
+def diverge_map(high=(0.565, 0.392, 0.173), low=(0.094, 0.310, 0.635)):
+    '''
+    low and high are colors that will be used for the two
+    ends of the spectrum. they can be either color strings
+    or rgb color tuples
+    '''
+    c = mcolors.ColorConverter().to_rgb
+    if isinstance(low, str): low = c(low)
+    if isinstance(high, str): high = c(high)
+    return make_colormap([low, c('white'), 0.5, c('white'), high])
+
