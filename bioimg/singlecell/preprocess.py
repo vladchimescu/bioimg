@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import pandas as pd
 import numpy as np
-from sklearn.feature_selection import RFE, SelectKBest, SelectFdr
+from sklearn.feature_selection import RFE
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
 def scale_data(df, scaler):
     '''Scale data columns
@@ -80,7 +81,7 @@ def select_features(df, y, sel):
            Input DataFrame with features in columns and
            observations in rows
        y : array-like or None
-           Response vector, maybe continuous or discrete
+           Response vector, may be continuous or discrete
        sel : feature selector
            Primary feature selection methods that can be used
            are SelectKBest and SelectFdr. The user initializes
@@ -105,3 +106,52 @@ def select_features(df, y, sel):
     else:
         df_out = sel.fit_transform(df, y)
     return pd.DataFrame(df_out, columns=df.columns[sel.get_support()])
+
+def recursive_elim(df, y, n_feat, elim_step=50, estim=None):
+    '''Recursive feature elimination
+       -----------------------------
+       Perform recursive feature elimination using
+       random forest classifier (or regression if y
+       is continuous). At each iteration `n=elim_step`
+       features are removed based on feature importance,
+       until the number of features exceeds `n_feat`
+       
+
+       Parameters
+       ----------
+       df : DataFrame
+           Input DataFrame with features in columns and
+           observations in rows
+       y : array-like
+           Response vector, may be continuous or discrete
+       n_feat : int
+           Number of features to select
+       elim_step : int
+           Number of features to eliminate at each step (default=50)
+       estim : estimator (optional)
+           sklearn estimator. By default sklearn.ensemble.RandomForestClassifier
+           or sklearn.ensemble.RandomForestRegressor. The user can initialize
+           a different model (e.g. sklearn.svm.SVC) and pass as `estim` argument
+
+       Returns
+       -------
+       df_out : DataFrame
+           DataFrame with subset features based on
+           recursive feature elimination
+    '''
+    if estim is None:
+        if y.dtype == np.float:
+            estim = RandomForestClassifier(n_estimators=500,
+                                           max_depth=7,
+                                           random_state=93,
+                                           n_jobs=-1)
+        else:
+            estim = RandomForestClassifier(n_estimators=500,
+                                 max_depth=7,
+                                 random_state=3,
+                                 n_jobs=-1)
+    rfe = RFE(estimator=estim,
+              n_features_to_select=n_feat, step=elim_step)
+    rfe = rfe.fit(df, y)
+    df_out = rfe.transform(df)
+    return pd.DataFrame(df_out, columns=df.columns[rfe.get_support()])
