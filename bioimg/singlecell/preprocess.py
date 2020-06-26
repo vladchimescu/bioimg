@@ -63,8 +63,41 @@ def check_data(df, return_indices=False):
         indices = dict(na_cols = colind, na_rows= rowind)
         return indices
 
+def aggregate_profiles(df, annot, how='mean',
+                       by='well', as_index=False):
+    '''Aggregate single-cell profiles
+       ------------------------------
+
+       Parameters
+       ----------
+       df : DataFrame
+           Single-cell data (cells in rows and features
+           in columns)
+       annot : DataFrame
+           Annotation data
+       how : string
+           Aggregation method passed to .groupby.agg()
+           Default: 'mean'
+       by : string
+           Annotation level (column in annot) that
+           groups cells. Default: 'well'
+       as_index : bool
+           Remove the grouping variable in the output
+           DataFrame. Default: False
+
+       Returns
+       -------
+       df_out : DataFrame with aggregated profiles
+           By default, the grouping variable 'well'
+           is kept in the `df_out`. Set `as_index=True`
+           to return aggregated profiles without the
+           grouping variable
+    '''
+    df[by] = annot[by]
+    return df.groupby(by, as_index=as_index).agg(how)
+
 # feature selection
-def select_features(df, y, sel):
+def select_features(df, sel):
     '''Perform feature selection
        -------------------------
        Perform feature selection and return a
@@ -80,8 +113,6 @@ def select_features(df, y, sel):
        df : DataFrame
            Input DataFrame with features in columns and
            observations in rows
-       y : array-like or None
-           Response vector, may be continuous or discrete
        sel : feature selector
            Primary feature selection methods that can be used
            are SelectKBest and SelectFdr. The user initializes
@@ -98,13 +129,10 @@ def select_features(df, y, sel):
        >>> from sklearn.feature_selection import SelectKBest, f_classif
        >>> sel = SelectKBest(f_classif, k=100)
        >>> # X, y are feature data and response vector, respectively
-       >>> X_subset = select_features(df=X, y=y, sel=sel)
-       
+       >>> sel = sel.fit(X,y)
+       >>> X_subset = select_features(df=X,sel=sel)
     '''
-    if y is None:
-        df_out = sel.fit_transform(df)
-    else:
-        df_out = sel.fit_transform(df, y)
+    df_out = sel.transform(df)
     return pd.DataFrame(df_out, columns=df.columns[sel.get_support()])
 
 def recursive_elim(df, y, n_feat, elim_step=50, estim=None):
@@ -135,9 +163,9 @@ def recursive_elim(df, y, n_feat, elim_step=50, estim=None):
 
        Returns
        -------
-       df_out : DataFrame
-           DataFrame with subset features based on
-           recursive feature elimination
+       rfe : sklearn.feature_selection.RFE object
+           Recursive feature eliminate object fit to the data.
+           The returned object should be used with `select_features` function
     '''
     if estim is None:
         if y.dtype == np.float:
@@ -153,5 +181,4 @@ def recursive_elim(df, y, n_feat, elim_step=50, estim=None):
     rfe = RFE(estimator=estim,
               n_features_to_select=n_feat, step=elim_step)
     rfe = rfe.fit(df, y)
-    df_out = rfe.transform(df)
-    return pd.DataFrame(df_out, columns=df.columns[rfe.get_support()])
+    return rfe
