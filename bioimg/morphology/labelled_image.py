@@ -83,33 +83,25 @@ def compute_haralick(cell, d):
 
     return pd.DataFrame({k : [v] for k,v in zip(names, values)})
 
-def compute_zernike(cell, r=12, deg=12, w=40, h=40):
+def compute_zernike(cell, r=15, deg=12):
     '''Compute Zernike moments
        -----------------------
 
        Parameters
        ----------
        cell : image array
-           image patch (e.g. bounding box of a cell, organoid, etc).
-           By default, the input image is rescaled to (w=40,h=40) patch
-           and Zernike moments are evaluated on the rescaled image.
-           See w, h arguments
+           image patch (e.g. bounding box of a cell, organoid, etc)
        r : int
            maximum radius, in pixels, of Zernike polynomials
        deg : int
            degree of Zernike polynomials
-       w : int
-           width of the rescaled image patch
-       h : int
-           height of the rescaled image patch
 
        Returns
        -------
        df : DataFrame
            DataFrame with Zernike moments
     '''
-    cell_norm = resize(cell, (w, h), anti_aliasing=True)
-    values = mht.features.zernike_moments(img_as_ubyte(cell_norm),
+    values = mht.features.zernike_moments(img_as_ubyte(cell),
                                           radius=r, degree=deg)
     names = ['zernike' + '-r' + str(r) + '-' + str(i) for i in range(len(values))]
     return pd.DataFrame({k : [v] for k,v in zip(names, values)})
@@ -279,7 +271,7 @@ class ImgX:
                          'thresh': False,
                          'distances': [3, 5, 7],
                          'angles': [0, np.pi/4, np.pi/2, 3*np.pi/4],
-                         'zernike_radii': [10,12],
+                         'zernike_radii': [15,18, 20],
                          'zernike_deg': 12}
 
     def __setattr__(self, name, value):
