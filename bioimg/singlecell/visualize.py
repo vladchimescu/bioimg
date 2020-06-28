@@ -94,7 +94,7 @@ def facet_dimred(X_df,
     if cmap is None:
         cmap = sn.diverging_palette(240, 15, as_cmap=True)
     fig, ax = plt.subplots(nrows=nrows, ncols=ncols,
-                           figsize = (nrows*scale, ncols*scale))
+                           figsize = (ncols*scale, nrows*scale))
     sn.despine()
     for r in range(nrows):
         for c in range(ncols):

@@ -1,8 +1,30 @@
 #!/usr/bin/env python3
 import pandas as pd
 import numpy as np
+import statsmodels.api as sm
 from sklearn.feature_selection import RFE
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+
+def glog_transform(df, eps=1e-8):
+    '''Generalized log-transform
+       -------------------------
+       
+       Parameters
+       ---------
+       df : DataFrame
+           Input data frame
+       eps : float (optional)
+           Small constant added before log-transformation
+           Default value: 1e-8
+
+       Returns
+       -------
+       df_out : DataFrame
+           Log-transformed features. The generalized log
+           transformation is log((x + sqrt(x**2 + x.min()**2))/2 + eps)
+           Parameter eps  is introduced to avoid log(0)
+    '''
+    return df.apply(lambda x: np.log((x + np.sqrt(x**2 + x.min()**2))/2 + eps))
 
 def scale_data(df, scaler):
     '''Scale data columns
@@ -62,6 +84,60 @@ def check_data(df, return_indices=False):
         rowind = df.index[(df.isna().any(axis=1))]
         indices = dict(na_cols = colind, na_rows= rowind)
         return indices
+
+def preprocess_data(df, sel=None, glog=True):
+    '''Preprocess and transform data
+       -----------------------------
+    '''
+    if sel is not None:
+        df = select_features(df, sel=sel)
+    if glog:
+        df = glog_transform(df)
+    check_data(df)
+    return df
+
+def get_residuals(df, y):
+    X = sm.add_constant(df)
+    lm = sm.OLS(y, X).fit()
+    return lm.resid.values
+
+def get_cor_residuals(rep1, rep2, sel, col):
+    resid1 = get_residuals(df=rep1[sel], y=rep1[col])
+    resid2 = get_residuals(df=rep2[sel], y=rep2[col])
+    return np.corrcoef(x=resid1, y=resid2)[0,1]
+
+def select_residcor(prof1, prof2, sel):
+    '''Iterative feature selection based on regression residuals
+       ---------------------------------------------------------
+    '''
+    assert(prof1.shape == prof2.shape)
+    all_feats = prof1.columns.values
+    stop_criterion = 1
+    while stop_criterion > 0.5:
+        feats_to_check = np.setdiff1d(all_feats, sel)
+        # correlations of residuals
+        resid_cor = np.array([get_cor_residuals(rep1=prof1, rep2=prof2,
+                          sel=sel, col=col) for col in feats_to_check])
+        sel = sel + [feats_to_check[np.argmax(resid_cor)]]
+        stop_criterion = np.sum(resid_cor > 0) / len(resid_cor)
+    return sel
+
+def select_uncorrelated(df, sel, cor_th=0.5):
+    '''Select non-redundant features
+       -----------------------------
+    '''
+    cor_df = df.corr()
+    
+    all_feats = df.columns.values
+    stop_criterion = 0
+    while stop_criterion < cor_th:
+        feats_to_check = np.setdiff1d(all_feats, sel)
+        cand_cor = cor_df[sel]
+        cand_cor = cand_cor[np.isin(cand_cor.index, feats_to_check)]
+        max_cor = cand_cor.abs().max(axis=1)
+        stop_criterion = np.min(max_cor)
+        sel = sel + [cand_cor.index[np.argmin(max_cor)]]
+    return sel
 
 def aggregate_profiles(df, annot, how='mean',
                        by='well', as_index=False):
