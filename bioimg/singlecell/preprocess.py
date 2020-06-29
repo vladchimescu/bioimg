@@ -49,6 +49,7 @@ def scale_data(df, scaler):
            using e.g. plate control wells and apply the
            same scaling to all wells in the same plate
 
+
        Returns
        -------
        df_scaled : DataFrame
@@ -88,6 +89,24 @@ def check_data(df, return_indices=False):
 def preprocess_data(df, sel=None, glog=True):
     '''Preprocess and transform data
        -----------------------------
+       Run initial feature selection and/or
+       transform the data using generalized log
+
+       Parameters
+       ----------
+       df : DataFrame
+           Input data with observations in rows and
+           features in columns
+       sel : feature selection method (optional)
+           Variable selection method, e.g. VarianceThreshold
+           that removes features with low variance
+       glog : bool
+           Transform the data using glog
+       
+       Returns
+       -------
+       df_out : DataFrame
+           Transformed data
     '''
     if sel is not None:
         df = select_features(df, sel=sel)
@@ -97,11 +116,15 @@ def preprocess_data(df, sel=None, glog=True):
     return df
 
 def get_residuals(df, y):
+    '''Compute linear model residuals
+    '''
     X = sm.add_constant(df)
     lm = sm.OLS(y, X).fit()
     return lm.resid.values
 
 def get_cor_residuals(rep1, rep2, sel, col):
+    '''Correlation between replicate lm residuals
+    '''
     resid1 = get_residuals(df=rep1[sel], y=rep1[col])
     resid2 = get_residuals(df=rep2[sel], y=rep2[col])
     return np.corrcoef(x=resid1, y=resid2)[0,1]
@@ -109,6 +132,28 @@ def get_cor_residuals(rep1, rep2, sel, col):
 def select_residcor(prof1, prof2, sel):
     '''Iterative feature selection based on regression residuals
        ---------------------------------------------------------
+       Provided the initial list of selected features (`sel`)
+       fit linear models for all other features based on the
+       selected set, compute residuals and at each step choose
+       a feature with the highest replicate correlation between
+       the residuals
+       
+
+       Parameters
+       ----------
+       prof1 : DataFrame
+           Mean (or median) profile of replicate 1
+       prof2 : DataFrame
+           Mean (or median) profile of replicate 2
+       sel : array like
+           Initial list of features against which all
+           other features are regressed
+
+       Returns
+       -------
+       sel : array like
+           List of selected features based on iterative
+           regression residual correlation
     '''
     assert(prof1.shape == prof2.shape)
     all_feats = prof1.columns.values
@@ -123,8 +168,27 @@ def select_residcor(prof1, prof2, sel):
     return sel
 
 def select_uncorrelated(df, sel, cor_th=0.5):
-    '''Select non-redundant features
-       -----------------------------
+    '''Select uncorrelated features
+       ----------------------------
+       Provided the initial list of selected features (`sel`)
+       add iteratively uncorrelated features, i.e. those that have 
+       maximum absolute correlation with any of the selected 
+       features less than the correlation threshold (`cor_th`)
+    
+       Parameters
+       ----------
+       df : DataFrame
+           Input data with features in columns
+       sel : array like
+           Initial list of selected features
+       cor_th : float (optional)
+           Correlation threshold
+
+       Returns
+       -------
+       sel : array like
+           List of featuers selected to be uncorrelated with
+           the initially provided list
     '''
     cor_df = df.corr()
     
