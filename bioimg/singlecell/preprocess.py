@@ -272,6 +272,9 @@ def select_features(df, sel):
        >>> sel = sel.fit(X,y)
        >>> X_subset = select_features(df=X,sel=sel)
     '''
+    if isinstance(sel, (list, np.ndarray)):
+        df_out = df[sel]
+        return df_out
     df_out = sel.transform(df)
     return pd.DataFrame(df_out, columns=df.columns[sel.get_support()])
 
