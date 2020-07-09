@@ -98,8 +98,8 @@ def read_image(fname, verbose=True):
     imgmd = get_img_metadata(fname)
     rdr = bf.ImageReader(fname, perform_init=True)
 
-    imgarray = np.zeros((imgmd.Pixels.get_SizeX(),
-                         imgmd.Pixels.get_SizeY()))
+    imgarray = np.zeros((imgmd.Pixels.get_SizeY(),
+                         imgmd.Pixels.get_SizeX()))
     imgarray = rdr.read()
 
     if verbose:
@@ -138,8 +138,8 @@ def load_imgstack(fname, verbose=False):
 
     if n_stacks > 1 or n_col > 1:
         imgarray = np.zeros((n_stacks,
-                             imgmd.Pixels.get_SizeX(),
                              imgmd.Pixels.get_SizeY(),
+                             imgmd.Pixels.get_SizeX(),
                              n_col))
 
         # read in the image into the array
@@ -177,8 +177,8 @@ def load_image_series(path, imgfiles, verbose = False):
     imgmd = get_img_metadata(os.path.join(path, imgfiles[0]))
 
     imgarray = np.zeros((len(imgfiles),
-                         imgmd.Pixels.get_SizeX(),
-                         imgmd.Pixels.get_SizeY()))
+                         imgmd.Pixels.get_SizeY(),
+                         imgmd.Pixels.get_SizeX()))
 
     for i, fname in enumerate(imgfiles):
         imgarray[i, :, :] = read_image(os.path.join(path, fname),
