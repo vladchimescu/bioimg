@@ -153,54 +153,6 @@ def load_imgstack(fname, verbose=False):
         print("Image size: %3d x %3d x %3d x %3d" % imgarray.shape)
     return imgarray
 
-
-def load_image_series(path, imgfiles):
-    '''
-    Read a series of greyscale images
-    ---------------------------------
-    Read a series of greyscale images (e.g. TIFF series)
-    into a numpy array
-
-    Parameters
-       ----------
-       fname : string
-          Image file name
-       verbose : bool
-          If `True` print image shape
-       Returns
-       -------
-       imgarray : np.array
-          Image array in (ZXYC) order
-    '''
-    # image metadata
-    imgmd = get_img_metadata(fname)
-    # image reader object
-    rdr = bf.ImageReader(fname, perform_init=True)
-
-    # initialize an empty numpy array to store the image data
-    # the size of the array is
-    # (Z, X, Y, C)
-    n_stacks = imgmd.Pixels.get_SizeZ()
-    n_col = imgmd.Pixels.get_channel_count()
-
-    if n_stacks > 1 or n_col > 1:
-        imgarray = np.zeros((n_stacks,
-                             imgmd.Pixels.get_SizeX(),
-                             imgmd.Pixels.get_SizeY(),
-                             n_col))
-
-        # read in the image into the array
-        for c in range(0, imgmd.Pixels.get_channel_count()):
-            for z in range(0, imgmd.Pixels.get_SizeZ()):
-                imgarray[z, :, :, c] = rdr.read(c=c, z=z)
-    else:
-        imgarray = rdr.read()
-
-    if verbose:
-        print("Image size: %3d x %3d x %3d x %3d" % imgarray.shape)
-    return imgarray
-
-
 def load_image_series(path, imgfiles, verbose = False):
     '''
     Read a series of greyscale images
