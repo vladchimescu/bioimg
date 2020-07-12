@@ -13,7 +13,9 @@ color_dict = {'red': 0, 'orange': 0.1,
               'white': None}
 
 def plot_channels(images, nrow, ncol, titles=None,
-                  scale_x=4, scale_y=4, cmap=None):
+                  scale_x=4, scale_y=4, cmap=None,
+                  hspace=0.2, wspace=0.2, bottom=0,
+                  top=0.7):
     '''Plot images as a grid of subplots
        ---------------------------------
        A list of image arrays is plotted in a matrix layout
@@ -35,9 +37,17 @@ def plot_channels(images, nrow, ncol, titles=None,
            Figure height parameter: h = scale_y * nrow
        cmap : string
            Name of the matplotlib colormap. Default to viridis
+       hspace : float (optional)
+           proportion of height reserved for spacing between subplots
+       wspace : float (optional)
+           proportion of width reserved for spacing between subplots
+       bottom : float (optional)
+           bottom of the subplots of the figure
+       top : float (optional)
+           top of the subplots of the figure
     '''
     plt.figure(figsize=(scale_x * ncol, scale_y * nrow))
-    plt.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
+    plt.subplots_adjust(hspace=hspace, wspace=wspace, top=top, bottom=bottom)
     for i in range(len(images)):
         plt.subplot(nrow, ncol, i + 1)
         plt.imshow(images[i], cmap=cmap)
