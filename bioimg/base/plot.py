@@ -4,6 +4,7 @@ Functions and classes for static plots
 """
 import matplotlib.pyplot as plt
 from skimage import color
+import numpy as np
 import matplotlib.colors as mcolors
 
 color_dict = {'red': 0, 'orange': 0.1,
@@ -11,6 +12,13 @@ color_dict = {'red': 0, 'orange': 0.1,
               'cyan': 0.5, 'blue': 0.6,
               'purple': 0.8, 'magenta': 0.9,
               'white': None}
+
+def rescale_array(a):
+    '''Rescale float numpy array to (0,1)-range
+    '''
+    if (a.dtype == np.float64) or (a.dtype == np.float32):
+        return (a - a.min()) / (a.max() - a.min())
+    return a
 
 def plot_channels(images, nrow, ncol, titles=None,
                   scale_x=4, scale_y=4, cmap=None,
@@ -88,18 +96,22 @@ def combine_channels(images, colors, blend=None, gamma=None):
            Controls color blending in the image overlay
        gamma : list or array (optional)
            Gamma correction factor for individual images
-     '''
+    '''
+    # rescale each channel to be in the range (0,1)
+    images = [rescale_array(img) for img in images]
     if blend is None:
         blend = [0.5] * len(images)
     if gamma is not None:
         images = [img**g for img, g in zip(images, gamma)]
 
+    
     images = [color.gray2rgb(img) for img in images]
     # color the images
     images = [colorize(img, hue=color_dict[c])
               for img, c in zip(images, colors)]
     images = [b * img for img, b in zip(images, blend)]
-    return sum(images)
+    # make sure that the images are in (0,1) range if dtype='float'    
+    return rescale_array(sum(images))
 
 
 def show_bbox(img, bbox, color='white', lw=2, size=12):
