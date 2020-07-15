@@ -46,6 +46,14 @@ class SegfreeProfiler:
             self.__setattr__(k, kwargs[k])
 
     def tile_images(self, imgs):
+        h, w = imgs[0].shape
+        height, width = self.tile_size
+        # clip if the tile size doesn't match image height
+        if h % height != 0:
+            imgs = [img[0:-(h % height),:] for img in imgs]
+        # clip if the tile size doesn't match image width
+        if w % width != 0:
+            imgs = [img[:,0:-(w % width)] for img in imgs]
         return [view_as_blocks(img,
                                block_shape=self.tile_size).reshape(-1, *self.tile_size) for img in imgs]        
 
