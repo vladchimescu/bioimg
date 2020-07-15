@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 import pandas as pd
+from sklearn.cluster import KMeans
 from skimage.util import view_as_blocks, view_as_windows
 from skimage.util import img_as_ubyte
 
