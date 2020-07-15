@@ -70,9 +70,19 @@ class SegfreeProfiler:
         nbits = np.unique(np.stack(img_tiles))
         blockfeats = [get_blockfeats(t, nbits=nbits) for t in img_tiles]
         grid_shape = tuple(int(x / y) for x,y in zip(imgs[0].shape, self.tile_size))
+        block_mean = pd.concat([bf.agg('mean') for bf in blockfeats], axis=1).T
+        block_mean.columns = ['-'.join(['pixel', str(col)])
+                           for col in block_mean.columns.values]
         supblocks = [get_supblocks(bf,
                                    km_block=self.km_block,
                                    grid_shape=grid_shape) for bf in blockfeats]
+        supblock_mean = pd.concat([bf.agg('mean') for bf in supblocks], axis=1).T
+        supblock_mean.columns = ['-'.join(['block', str(col)])
+                           for col in supblock_mean.columns.values]
         img_profs = pd.concat([get_blocktype(self.km_supblock.predict(supblocks[i]),
-                                             nbits=range(self.n_supblock_types)) for i in range(len(supblocks))]).reset_index(drop=True)
-        return img_profs
+                                             nbits=range(self.n_supblock_types))
+                               for i in range(len(supblocks))]).reset_index(drop=True)
+        img_profs.columns = ['-'.join(['superblock', str(col)])
+                   for col in img_profs.columns.values]
+        imgdf = pd.concat([img_profs, supblock_mean,  block_mean], axis=1)
+        return imgdf
