@@ -12,12 +12,19 @@ def get_blocktype(a, nbits):
 def get_blockfeats(img_tiles, nbits):
      return pd.concat([get_blocktype(img_tiles[i], nbits=nbits) for i in range(img_tiles.shape[0])]).reset_index(drop=True)
 
+def get_foreground_blocks(bl, thresh=0.5):
+    return bl[bl[0] < thresh].reset_index(drop=True)
 
-def get_supblocks(bf, km_block, grid_shape, window_shape=3):
-    img_blocked = km_block.predict(bf).reshape(grid_shape)
+def get_supblocks(bf, km_block, grid_shape, window_shape=3, thresh=0.5):
+    # plus one for background
+    n_sb = len(np.unique(km_block.labels_)) + 1
+    img_blocked = np.zeros(bf.shape[0])
+    img_blocked[bf[0] < thresh] = km_block.predict(bf[bf[0] < thresh]) + 1
+    img_blocked = img_blocked.reshape(grid_shape)
     supblocks = view_as_windows(img_blocked, window_shape=window_shape).reshape(-1,window_shape,window_shape)
-    # correct here: instead of range(50) -> n_supblock_types
-    return pd.concat([get_blocktype(supblocks[i], nbits=range(50)) for i in range(supblocks.shape[0])])
+    mid = np.ceil(3/2).astype(int) - 1
+    fgr_supblocks = np.stack([sb for sb in supblocks if sb[mid,mid]])
+    return pd.concat([get_blocktype(sb, nbits=range(n_sb)) for sb in fgr_supblocks])
 
 class SegfreeProfiler:
     def __init__(self, **kwargs):
@@ -61,9 +68,11 @@ class SegfreeProfiler:
         img_tiles = self.tile_images(imgs)
         nbits = np.unique(np.stack(img_tiles))
         blockfeats = [get_blockfeats(t, nbits=nbits) for t in img_tiles]
+        # only foreground blocks for clustering
+        foregr_blocks = [get_foreground_blocks(bl) for bl in blockfeats]
         self.km_block = KMeans(n_clusters=self.n_block_types,
                                n_init=n_init,
-                               random_state=random_state).fit(pd.concat(blockfeats))
+                               random_state=random_state).fit(pd.concat(foregr_blocks))
         grid_shape = tuple(int(x / y) for x,y in zip(imgs[0].shape, self.tile_size))
         supblocks = [get_supblocks(bf,
                                    km_block=self.km_block,
