@@ -91,7 +91,9 @@ class SegfreeProfiler:
             imgs = [img[:,0:-(w % width),:] for img in imgs]
         return [view_as_blocks(img, block_shape=(height, width, nchan)).reshape(-1, height, width, nchan) for img in imgs]
 
-    def _fit_single_channel(self, imgs, n_init, random_state):
+    def _fit_single_channel(self, imgs, n_init,
+                            random_state,
+                            transform=False):
         img_tiles = self.tile_images(imgs)
         print("Estimating tile properties")
         blockfeats = [get_blockfeats(t) for t in img_tiles]
@@ -111,9 +113,13 @@ class SegfreeProfiler:
         self.km_supblock = KMeans(n_clusters=self.n_supblock_types,
                                   n_init=n_init,
                                   random_state=random_state).fit(pd.concat(supblocks).fillna(0))
+        if transform:
+            return self._transform_single_channel(imgs, supblocks)
         print("Done")
 
-    def _fit_multichannel(self, imgs, n_init, random_state):
+    def _fit_multichannel(self, imgs, n_init,
+                          random_state,
+                          transform=False):
         img_tiles = self.tile_color_images(imgs)
         Xtrain = np.concatenate([flatten_tiles(t) for t in img_tiles])
         print("Running PCA on tiles")
@@ -136,6 +142,8 @@ class SegfreeProfiler:
         self.km_supblock = KMeans(n_clusters=self.n_supblock_types,
                                   n_init=n_init,
                                   random_state=random_state).fit(pd.concat(supblocks).fillna(0))
+        if transform:
+            return self._transform_multichannel(imgs, supblocks)
         print("Done")
         
         
@@ -149,20 +157,35 @@ class SegfreeProfiler:
             self._fit_multichannel(imgs=imgs, n_init=n_init, random_state=random_state)
         return self
 
-    def _transform_single_channel(self, imgs):
-        img_tiles = self.tile_images(imgs)
-        blockfeats = [get_blockfeats(t) for t in img_tiles]
-        blockdf = pd.concat(blockfeats).fillna(0)
-        cols = blockdf.columns.values
+    def fit_transform(self, imgs, n_init=50, random_state=1307):
+        if imgs[0].ndim == 2:
+            print("Fitting model for greyscale images")
+            return self._fit_single_channel(imgs=imgs,
+                                     n_init=n_init,
+                                     random_state=random_state,
+                                     transform=True)
+        if imgs[0].ndim == 3:
+            print("Fitting model for multichannel images")
+            return self._fit_multichannel(imgs=imgs,
+                                          n_init=n_init,
+                                          random_state=random_state,
+                                          transform=True)
+
+    def _transform_single_channel(self, imgs,
+                                  supblocks=None):
+        img_tiles = self.tile_images(imgs)           
         pixel_mean = pd.concat([get_blocktype(t) for t in img_tiles]).fillna(0).reset_index(drop=True)
         pixel_mean.columns = ['-'.join(['pixel', str(col)])
                            for col in pixel_mean.columns.values]
         grid_shape = tuple(int(x / y) for x,y in zip(imgs[0].shape, self.tile_size))
-       
-        supblocks = [get_supblocks(bf,
-                                   km_block=self.km_block,
-                                   cols=cols,
-                                   grid_shape=grid_shape) for bf in blockfeats]
+        if supblocks is None:
+            blockfeats = [get_blockfeats(t) for t in img_tiles]
+            blockdf = pd.concat(blockfeats).fillna(0)
+            cols = blockdf.columns.values
+            supblocks = [get_supblocks(bf,
+                                       km_block=self.km_block,
+                                       cols=cols,
+                                       grid_shape=grid_shape) for bf in blockfeats]
         sup_cols = pd.concat(supblocks).columns.values.astype(np.int)
         block_mean = pd.concat([bf.reindex(columns=sup_cols).fillna(0).agg('mean') for bf in supblocks], axis=1).T
         block_mean.columns = ['-'.join(['block', str(col)])
@@ -175,13 +198,15 @@ class SegfreeProfiler:
         img_prof = pd.concat([supblock_mean, block_mean,  pixel_mean], axis=1)
         return img_prof
 
-    def _transform_multichannel(self, imgs):
+    def _transform_multichannel(self, imgs,
+                                supblocks=None):
         img_tiles = self.tile_color_images(imgs)
-        Xtest = np.concatenate([flatten_tiles(t) for t in img_tiles])
-        blockdf = self.pca.transform(Xtest)
-        grid_shape = tuple(int(x / y) for x,y in zip(imgs[0].shape, self.tile_size))
-        img_blocked = self.km_block.predict(blockdf).reshape(-1, *grid_shape)
-        supblocks = [get_color_supblocks(img_blocked[i]) for i in range(img_blocked.shape[0])]
+        if supblocks is None:
+            Xtest = np.concatenate([flatten_tiles(t) for t in img_tiles])
+            blockdf = self.pca.transform(Xtest)
+            grid_shape = tuple(int(x / y) for x,y in zip(imgs[0].shape, self.tile_size))
+            img_blocked = self.km_block.predict(blockdf).reshape(-1, *grid_shape)
+            supblocks = [get_color_supblocks(img_blocked[i]) for i in range(img_blocked.shape[0])]
         sup_cols = pd.concat(supblocks).columns.values.astype(np.int)
         block_mean = pd.concat([bf.reindex(columns=sup_cols).fillna(0).agg('mean') for bf in supblocks], axis=1).T
         block_mean.columns = ['-'.join(['block', str(col)])
