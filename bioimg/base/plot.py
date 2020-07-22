@@ -63,7 +63,6 @@ def plot_channels(images, nrow, ncol, titles=None,
             plt.title(titles[i], size=12)
         plt.xticks(())
         plt.yticks(())
-    plt.show()
 
 def colorize(image, hue, saturation=1):
     """ Add color of the given hue to an RGB image.
