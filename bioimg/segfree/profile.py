@@ -61,6 +61,9 @@ class SegfreeProfiler:
         self.km_block = None
         self.km_supblock = None
 
+        self.cols = None
+        self.sup_cols = None
+
     def __setattr__(self, name, value):
         self.__dict__[name] = value
 
@@ -98,7 +101,7 @@ class SegfreeProfiler:
         print("Estimating tile properties")
         blockfeats = [get_blockfeats(t) for t in img_tiles]
         blockdf = pd.concat(blockfeats).fillna(0)
-        cols = blockdf.columns.values
+        self.cols = blockdf.columns.values
         print("Running k-means on tiles")
         self.km_block = KMeans(n_clusters=self.n_block_types,
                                n_init=n_init,
@@ -107,8 +110,9 @@ class SegfreeProfiler:
         grid_shape = tuple(int(x / y) for x,y in zip(imgs[0].shape, self.tile_size))
         supblocks = [get_supblocks(bf,
                                    km_block=self.km_block,
-                                   cols=cols,
+                                   cols=self.cols,
                                    grid_shape=grid_shape) for bf in blockfeats]
+        self.sup_cols = pd.concat(supblocks).columns.values.astype(np.int)
         print("Running k-means on superblocks")
         self.km_supblock = KMeans(n_clusters=self.n_supblock_types,
                                   n_init=n_init,
@@ -138,6 +142,7 @@ class SegfreeProfiler:
         grid_shape = tuple(int(x / y) for x,y in zip(imgs[0].shape, self.tile_size))
         img_blocked = self.km_block.predict(blockdf).reshape(-1, *grid_shape)
         supblocks = [get_color_supblocks(img_blocked[i]) for i in range(img_blocked.shape[0])]
+        self.sup_cols = pd.concat(supblocks).columns.values.astype(np.int)
         print("Running k-means on superblocks")
         self.km_supblock = KMeans(n_clusters=self.n_supblock_types,
                                   n_init=n_init,
@@ -181,16 +186,14 @@ class SegfreeProfiler:
         if supblocks is None:
             blockfeats = [get_blockfeats(t) for t in img_tiles]
             blockdf = pd.concat(blockfeats).fillna(0)
-            cols = blockdf.columns.values
             supblocks = [get_supblocks(bf,
                                        km_block=self.km_block,
-                                       cols=cols,
+                                       cols=self.cols,
                                        grid_shape=grid_shape) for bf in blockfeats]
-        sup_cols = pd.concat(supblocks).columns.values.astype(np.int)
-        block_mean = pd.concat([bf.reindex(columns=sup_cols).fillna(0).agg('mean') for bf in supblocks], axis=1).T
+        block_mean = pd.concat([bf.reindex(columns=self.sup_cols).fillna(0).agg('mean') for bf in supblocks], axis=1).T
         block_mean.columns = ['-'.join(['block', str(col)])
                            for col in block_mean.columns.values]
-        supblock_mean = pd.concat([get_blocktype(self.km_supblock.predict(sbf.reindex(columns=sup_cols).fillna(0)) + 1)
+        supblock_mean = pd.concat([get_blocktype(self.km_supblock.predict(sbf.reindex(columns=self.sup_cols).fillna(0)) + 1)
                        for sbf in supblocks]).reset_index(drop=True)
         supblock_mean = supblock_mean.fillna(0)
         supblock_mean.columns = ['-'.join(['superblock', str(col)])
@@ -207,11 +210,10 @@ class SegfreeProfiler:
             grid_shape = tuple(int(x / y) for x,y in zip(imgs[0].shape, self.tile_size))
             img_blocked = self.km_block.predict(blockdf).reshape(-1, *grid_shape)
             supblocks = [get_color_supblocks(img_blocked[i]) for i in range(img_blocked.shape[0])]
-        sup_cols = pd.concat(supblocks).columns.values.astype(np.int)
-        block_mean = pd.concat([bf.reindex(columns=sup_cols).fillna(0).agg('mean') for bf in supblocks], axis=1).T
+        block_mean = pd.concat([bf.reindex(columns=self.sup_cols).fillna(0).agg('mean') for bf in supblocks], axis=1).T
         block_mean.columns = ['-'.join(['block', str(col)])
                            for col in block_mean.columns.values]
-        supblock_mean = pd.concat([get_blocktype(self.km_supblock.predict(sbf.reindex(columns=sup_cols).fillna(0)) + 1)
+        supblock_mean = pd.concat([get_blocktype(self.km_supblock.predict(sbf.reindex(columns=self.sup_cols).fillna(0)) + 1)
                        for sbf in supblocks]).reset_index(drop=True)
         supblock_mean = supblock_mean.fillna(0)
         supblock_mean.columns = ['-'.join(['superblock', str(col)])
