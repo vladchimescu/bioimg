@@ -6,18 +6,17 @@ from sklearn.decomposition import PCA
 from skimage.util import view_as_blocks, view_as_windows
 from skimage.util import img_as_ubyte
 
-def get_blocktype(a):
+def get_block_counts(a):
     block_type = dict(zip(*np.unique(a, return_counts=True)))
     return pd.DataFrame([block_type]) / a.size
 
 def get_blockfeats(blocks):
     mask = np.array([(bl != 0).sum() > 0.5 * bl.size for bl in blocks])
-    blockfeats = pd.concat([get_blocktype(bl) for bl in blocks[mask]])
+    blockfeats = pd.concat([get_block_counts(bl) for bl in blocks[mask]])
     blockfeats.index = np.where(mask)[0]
     return blockfeats
 
-def get_supblocks(bf, km_block, cols, grid_shape, window_shape=3, thresh=0.5):
-    # plus one for background
+def get_block_types(bf, km_block, cols, grid_shape):
     n_sb = len(np.unique(km_block.labels_)) + 1
     img_blocked = np.zeros(grid_shape[0] * grid_shape[1])
     # make sure has the same columns as all other blocks
@@ -25,17 +24,20 @@ def get_supblocks(bf, km_block, cols, grid_shape, window_shape=3, thresh=0.5):
     # only if index is set (foreground blocks)
     img_blocked[bf.index] = km_block.predict(bf) + 1
     img_blocked = img_blocked.reshape(grid_shape)
+    return img_blocked
+
+def get_supblocks(img_blocked, window_shape=3):
     supblocks = view_as_windows(img_blocked,
                                 window_shape=window_shape).reshape(-1,window_shape,
                                                                    window_shape)
     mid = np.ceil(window_shape/2).astype(int) - 1
     fgr_supblocks = np.stack([sb for sb in supblocks if sb[mid,mid]])
-    return pd.concat([get_blocktype(sb) for sb in fgr_supblocks])
+    return pd.concat([get_block_counts(sb) for sb in fgr_supblocks])
 
 def get_color_supblocks(img, window_shape=3):
     supblocks = view_as_windows(img,
                                     window_shape=window_shape).reshape(-1,window_shape, window_shape)
-    return pd.concat([get_blocktype(sb) for sb in supblocks])
+    return pd.concat([get_block_counts(sb) for sb in supblocks])
 
 def flatten_tiles(blocks):
     return np.array([block.ravel() for block in blocks])
@@ -106,16 +108,17 @@ class SegfreeProfiler:
                                random_state=random_state).fit(blockdf)
         
         grid_shape = tuple(int(x / y) for x,y in zip(imgs[0].shape, self.tile_size))
-        supblocks = [get_supblocks(bf,
-                                   km_block=self.km_block,
-                                   cols=self.pixel_types,
-                                   grid_shape=grid_shape) for bf in blockfeats]
+        blocks = [get_block_types(bf,
+                              km_block=self.km_block,
+                              cols=self.pixel_types,
+                              grid_shape=grid_shape) for bf in blockfeats]
+        supblocks = [get_supblocks(bl) for bl in blocks]
         print("Running k-means on superblocks")
         self.km_supblock = KMeans(n_clusters=self.n_supblock_types,
                                   n_init=n_init,
                                   random_state=random_state).fit(pd.concat(supblocks).fillna(0))
         if transform:
-            return self._transform_single_channel(imgs, supblocks)
+            return self._transform_single_channel(imgs, blocks, supblocks)
         print("Done")
 
     def _fit_multichannel(self, imgs, n_init,
@@ -144,7 +147,7 @@ class SegfreeProfiler:
                                   n_init=n_init,
                                   random_state=random_state).fit(pd.concat(supblocks).fillna(0))
         if transform:
-            return self._transform_multichannel(imgs, supblocks)
+            return self._transform_multichannel(imgs, img_blocked, supblocks)
         print("Done")
         
         
@@ -173,23 +176,28 @@ class SegfreeProfiler:
                                           transform=True)
 
     def _transform_single_channel(self, imgs,
+                                  blocks=None,
                                   supblocks=None):
         img_tiles = self.tile_images(imgs)           
-        pixel_mean = pd.concat([get_blocktype(t) for t in img_tiles]).fillna(0).reset_index(drop=True)
+        pixel_mean = (pd.concat([get_block_counts(t) for t in img_tiles]).
+                      reindex(columns=self.pixel_types).
+                      fillna(0).
+                      reset_index(drop=True))
         pixel_mean.columns = ['-'.join(['pixel', str(col)])
                            for col in pixel_mean.columns.values]
         grid_shape = tuple(int(x / y) for x,y in zip(imgs[0].shape, self.tile_size))
         if supblocks is None:
             blockfeats = [get_blockfeats(t) for t in img_tiles]
             blockdf = pd.concat(blockfeats).fillna(0)
-            supblocks = [get_supblocks(bf,
-                                       km_block=self.km_block,
-                                       cols=self.pixel_types,
-                                       grid_shape=grid_shape) for bf in blockfeats]
-        block_mean = pd.concat([bf.reindex(columns=range(self.n_block_types)).fillna(0).agg('mean') for bf in supblocks], axis=1).T
-        block_mean.columns = ['-'.join(['block', str(col+1)])
+            blocks = [get_block_types(bf,
+                              km_block=self.km_block,
+                              cols=self.pixel_types,
+                              grid_shape=grid_shape) for bf in blockfeats]
+            supblocks = [get_supblocks(bl) for bl in blocks]
+        block_mean = pd.concat([get_block_counts(bl).reindex(columns=range(self.n_block_types+1)) for bl in blocks]).fillna(0).reset_index(drop=True)
+        block_mean.columns = ['-'.join(['block', str(col)])
                            for col in block_mean.columns.values]
-        supblock_mean = pd.concat([get_blocktype(self.km_supblock.predict(sbf.reindex(columns=range(self.n_block_types + 1)).fillna(0)))
+        supblock_mean = pd.concat([get_block_counts(self.km_supblock.predict(sbf.reindex(columns=range(self.n_block_types + 1)).fillna(0)))
                        for sbf in supblocks]).reset_index(drop=True)
         supblock_mean = supblock_mean.reindex(columns=range(self.n_supblock_types)).fillna(0)
         supblock_mean.columns = ['-'.join(['superblock', str(col+1)])
@@ -198,6 +206,7 @@ class SegfreeProfiler:
         return img_prof
 
     def _transform_multichannel(self, imgs,
+                                img_blocked=None,
                                 supblocks=None):
         img_tiles = self.tile_color_images(imgs)
         Xtest = np.concatenate([flatten_tiles(t) for t in img_tiles])
@@ -210,10 +219,10 @@ class SegfreeProfiler:
             grid_shape = tuple(int(x / y) for x,y in zip(imgs[0].shape, self.tile_size))
             img_blocked = self.km_block.predict(blockdf).reshape(-1, *grid_shape)
             supblocks = [get_color_supblocks(img_blocked[i]) for i in range(img_blocked.shape[0])]
-        block_mean = pd.concat([bf.reindex(columns=range(self.n_block_types)).fillna(0).agg('mean') for bf in supblocks], axis=1).T
+        block_mean = pd.concat([get_block_counts(img_blocked[i]).reindex(columns=range(self.n_block_types)) for i in range(img_blocked.shape[0])]).fillna(0).reset_index(drop=True)
         block_mean.columns = ['-'.join(['block', str(col+1)])
                            for col in block_mean.columns.values]
-        supblock_mean = pd.concat([get_blocktype(self.km_supblock.predict(sbf.reindex(columns=range(self.n_block_types)).fillna(0)))
+        supblock_mean = pd.concat([get_block_counts(self.km_supblock.predict(sbf.reindex(columns=range(self.n_block_types)).fillna(0)))
                        for sbf in supblocks]).reset_index(drop=True)
         supblock_mean = supblock_mean.reindex(columns=range(self.n_supblock_types)).fillna(0)
         supblock_mean.columns = ['-'.join(['superblock', str(col+1)])
