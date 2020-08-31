@@ -79,7 +79,7 @@ def compute_haralick(cell, d):
     names = [x + '-d' + str(d) + '-' + str(y) for y in range(4) for x in F_HARALICK]
     values = mht.features.haralick(img_as_ubyte(cell),
                                    distance=d,
-                                   ignore_zeros=True).ravel()
+                                   ignore_zeros=False).ravel()
 
     return pd.DataFrame({k : [v] for k,v in zip(names, values)})
 
