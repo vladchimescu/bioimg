@@ -49,16 +49,72 @@ def tile_images(imgs, tile_size):
     return [view_as_blocks(img, block_shape=block_shape).reshape(-1, *block_shape) for img in imgs]
 
 def get_block_counts(a):
+    '''Counts frequency of each element in an image block
+       --------------------------------------------------
+       Computes occurence frequency of block elements,
+       such as pixel values (for int-valued images) or
+       block types in a superblock
+
+       Parameters
+       ----------
+       a : array
+           Image block
+
+       Returns
+       -------
+       df : DataFrame
+           DataFrame with frequencies of each element.
+           Columns indicate bins / levels
+    '''
     block_type = dict(zip(*np.unique(a, return_counts=True)))
     return pd.DataFrame([block_type]) / a.size
 
 def get_blockfeats(blocks):
+    '''Compute features for greyscale image blocks
+       -------------------------------------------
+       For greyscale blocks, the features are 
+       occurence frequencies of individual bits
+       (images are assumed to be of 8 or 16-bit integer type)
+    
+       Parameters
+       ----------
+       blocks : list-like
+           List or array of greyscale image blocks
+
+       Returns
+       -------
+       df : DataFrame
+           DataFrame with blocks in rows and
+           block features in columns
+    '''
     mask = np.array([(bl != 0).sum() > 0.5 * bl.size for bl in blocks])
     blockfeats = pd.concat([get_block_counts(bl) for bl in blocks[mask]])
     blockfeats.index = np.where(mask)[0]
     return blockfeats
 
 def get_block_types(bf, km_block, cols, grid_shape):
+    '''Cluster greyscale image blocks based on features
+       ------------------------------------------------
+       Use the pre-trained KMeans object to return
+       cluster labels of each block in a greyscale image
+
+       Parameters
+       ----------
+       bf : DataFrame with block features
+           Each block is characterized by bit frequencies
+       km_block : KMeans object
+           KMeans model trained on greyscale image blocks
+       cols : array
+           greyscale bit levels
+       grid_shape : tuple
+           Number of blocks in rows and columns
+
+       Returns
+       -------
+       img_blocked : array
+           Array (matrix) with block types. The spatial
+           order (as in the original image) is preserved
+    '''
     img_blocked = np.zeros(grid_shape[0] * grid_shape[1])
     # make sure has the same columns as all other blocks
     bf = bf.reindex(columns=cols).fillna(0)
@@ -68,6 +124,24 @@ def get_block_types(bf, km_block, cols, grid_shape):
     return img_blocked
 
 def get_supblocks(img_blocked, window_shape=3):
+    '''Computes superblock features for greyscale images
+       -------------------------------------------------
+
+       Parameters
+       ----------
+       img_blocked : array
+           Grid (matrix) with block types
+           (Block types are integers in range 1 ... n_block_types)
+       window_shape : int (optional)
+           Size of a sliding window, by default 3x3 window is used
+
+       Returns
+       -------
+       df : DataFrame
+           DataFrame with superblocks in rows and features
+           in columns. Superblock features for greyscale images
+           are simply block type occurence frequencies
+    '''
     supblocks = view_as_windows(img_blocked,
                                 window_shape=window_shape).reshape(-1,window_shape,
                                                                    window_shape)
