@@ -6,6 +6,48 @@ from sklearn.decomposition import PCA
 from skimage.util import view_as_blocks, view_as_windows
 from skimage.util import img_as_ubyte
 
+
+def tile_images(imgs, tile_size):
+    '''Tile images
+       --------------------------------------
+       Grid images into blocks of specified width
+       and height and return the list of image tiles.
+       Supports greyscale, color and 3D greyscale images
+
+       Parameters
+       ----------
+       imgs : list or array of images
+       tile_size : tuple
+       
+       Returns
+       -------
+       list : list of tiled images
+    '''
+    height, width = tile_size
+    # if greyscale image
+    if imgs[0].ndim == 2:
+        h, w = imgs[0].shape
+        # clip if the tile size doesn't match image height
+        if h % height != 0:
+            imgs = [img[0:-(h % height),:] for img in imgs]
+        # clip if the tile size doesn't match image width
+        if w % width != 0:
+            imgs = [img[:,0:-(w % width)] for img in imgs]
+        block_shape = (height, width)
+    # if multichannel or 3D image
+    if imgs[0].ndim == 3:
+        h, w, nchan = imgs[0].shape
+        # clip if the tile size doesn't match image height
+        if h % height != 0:
+            imgs = [img[0:-(h % height),:,:] for img in imgs]
+        # clip if the tile size doesn't match image width
+        if w % width != 0:
+            imgs = [img[:,0:-(w % width),:] for img in imgs]
+        block_shape = (height, width, nchan)
+    if imgs[0].ndim > 3:
+        raise TypeError("Only 2D and 3D image arrays are supported")
+    return [view_as_blocks(img, block_shape=block_shape).reshape(-1, *block_shape) for img in imgs]
+
 def get_block_counts(a):
     block_type = dict(zip(*np.unique(a, return_counts=True)))
     return pd.DataFrame([block_type]) / a.size
@@ -17,7 +59,6 @@ def get_blockfeats(blocks):
     return blockfeats
 
 def get_block_types(bf, km_block, cols, grid_shape):
-    n_sb = len(np.unique(km_block.labels_)) + 1
     img_blocked = np.zeros(grid_shape[0] * grid_shape[1])
     # make sure has the same columns as all other blocks
     bf = bf.reindex(columns=cols).fillna(0)
@@ -45,12 +86,27 @@ def flatten_tiles(blocks):
 class SegfreeProfiler:
     def __init__(self, **kwargs):
         '''
-        Parameters
+        Segmentation-free profiler class
+        --------------------------------
+        Generates segmentation-free profiles for multichannel or 3D images
+
+        Attributes
         ----------
         tile_size : tuple
+        n_block_types : int
+        n_supblock_types : int
+        n_components : int
+        n_subset : int
         pca : PCA object for dimensionality reduction
         km_block : KMeans object for tiles (blocks)
         km_supblock : KMeans object for superblocks
+
+        Methods
+        -------
+        fit(imgs, n_init=50, random_state=1307)
+        fit_transform(imgs, n_init=50, random_state=1307)
+        transform(imgs)
+        
         '''
         self.tile_size = kwargs.get('tile_size', None)
         self.n_block_types = kwargs.get('n_block_types', 50)
@@ -71,33 +127,10 @@ class SegfreeProfiler:
         for k in kwargs.keys():
             self.__setattr__(k, kwargs[k])
 
-    def tile_images(self, imgs):
-        h, w = imgs[0].shape
-        height, width = self.tile_size
-        # clip if the tile size doesn't match image height
-        if h % height != 0:
-            imgs = [img[0:-(h % height),:] for img in imgs]
-        # clip if the tile size doesn't match image width
-        if w % width != 0:
-            imgs = [img[:,0:-(w % width)] for img in imgs]
-        return [view_as_blocks(img,
-                               block_shape=self.tile_size).reshape(-1, *self.tile_size) for img in imgs]
-
-    def tile_color_images(self, imgs):
-        h, w, nchan = imgs[0].shape
-        height, width = self.tile_size
-        # clip if the tile size doesn't match image height
-        if h % height != 0:
-            imgs = [img[0:-(h % height),:,:] for img in imgs]
-        # clip if the tile size doesn't match image width
-        if w % width != 0:
-            imgs = [img[:,0:-(w % width),:] for img in imgs]
-        return [view_as_blocks(img, block_shape=(height, width, nchan)).reshape(-1, height, width, nchan) for img in imgs]
-
     def _fit_single_channel(self, imgs, n_init,
                             random_state,
                             transform=False):
-        img_tiles = self.tile_images(imgs)
+        img_tiles = tile_images(imgs, self.tile_size)
         print("Estimating tile properties")
         blockfeats = [get_blockfeats(t) for t in img_tiles]
         blockdf = pd.concat(blockfeats).fillna(0)
@@ -124,7 +157,7 @@ class SegfreeProfiler:
     def _fit_multichannel(self, imgs, n_init,
                           random_state,
                           transform=False):
-        img_tiles = self.tile_color_images(imgs)
+        img_tiles = tile_images(imgs, self.tile_size)
         Xtrain = np.concatenate([flatten_tiles(t) for t in img_tiles])
         print("Running PCA on tiles")
         self.pca = PCA(n_components=self.n_components,
@@ -178,7 +211,7 @@ class SegfreeProfiler:
     def _transform_single_channel(self, imgs,
                                   blocks=None,
                                   supblocks=None):
-        img_tiles = self.tile_images(imgs)           
+        img_tiles = tile_images(imgs, self.tile_size)           
         pixel_mean = (pd.concat([get_block_counts(t) for t in img_tiles]).
                       reindex(columns=self.pixel_types).
                       fillna(0).
@@ -208,7 +241,7 @@ class SegfreeProfiler:
     def _transform_multichannel(self, imgs,
                                 img_blocked=None,
                                 supblocks=None):
-        img_tiles = self.tile_color_images(imgs)
+        img_tiles = tile_images(imgs, self.tile_size)
         Xtest = np.concatenate([flatten_tiles(t) for t in img_tiles])
         blockdf = self.pca.transform(Xtest)
         pc_mean = pd.DataFrame(blockdf,
