@@ -203,16 +203,23 @@ class SegfreeProfiler:
 
     def _fit_single_channel(self, imgs, n_init,
                             random_state,
-                            transform=False):
+                            downsample,
+                            transform):
         img_tiles = tile_images(imgs, self.tile_size)
         print("Estimating tile properties")
         blockfeats = [get_blockfeats(t) for t in img_tiles]
         blockdf = pd.concat(blockfeats).fillna(0)
         self.pixel_types = blockdf.columns.values
+        
         print("Running k-means on tiles")
+        subset = range(blockdf.shape[0])
+        # downsample the image tiles
+        if downsample:
+            np.random.seed(random_state)
+            subset = np.random.choice(range(blockdf.shape[0]), size=self.n_subset)
         self.km_block = KMeans(n_clusters=self.n_block_types,
                                n_init=n_init,
-                               random_state=random_state).fit(blockdf)
+                               random_state=random_state).fit(blockdf.loc[subset,:])
         
         grid_shape = tuple(int(x / y) for x,y in zip(imgs[0].shape, self.tile_size))
         blocks = [get_block_types(bf,
@@ -230,7 +237,8 @@ class SegfreeProfiler:
 
     def _fit_multichannel(self, imgs, n_init,
                           random_state,
-                          transform=False):
+                          downsample,
+                          transform):
         img_tiles = tile_images(imgs, self.tile_size)
         Xtrain = np.concatenate([flatten_tiles(t) for t in img_tiles])
         print("Running PCA on tiles")
@@ -239,9 +247,13 @@ class SegfreeProfiler:
                        whiten=True,
                        random_state=random_state).fit(Xtrain)
         blockdf = self.pca.transform(Xtrain)
-        np.random.seed(random_state)
-        subset = np.random.choice(range(blockdf.shape[0]), size=self.n_subset)
+
         print("Running k-means on tiles")
+        subset = range(blockdf.shape[0])
+        # downsample the image tiles
+        if downsample:
+            np.random.seed(random_state)
+            subset = np.random.choice(range(blockdf.shape[0]), size=self.n_subset)
         self.km_block = KMeans(n_clusters=self.n_block_types,
                                n_init=n_init,
                                random_state=random_state).fit(blockdf[subset,:])
@@ -259,28 +271,42 @@ class SegfreeProfiler:
         
         
 
-    def fit(self, imgs, n_init=50, random_state=1307):
+    def fit(self, imgs, n_init=50,
+            random_state=1307,
+            downsample=True,
+            transform=False):
         if imgs[0].ndim == 2:
             print("Fitting model for greyscale images")
-            self._fit_single_channel(imgs=imgs, n_init=n_init, random_state=random_state)
+            self._fit_single_channel(imgs=imgs, n_init=n_init,
+                                     random_state=random_state,
+                                     downsample=downsample,
+                                     transform=transform)
         if imgs[0].ndim == 3:
             print("Fitting model for multichannel images")
-            self._fit_multichannel(imgs=imgs, n_init=n_init, random_state=random_state)
+            self._fit_multichannel(imgs=imgs, n_init=n_init,
+                                   random_state=random_state,
+                                   downsample=downsample,
+                                   transform=transform)
         return self
 
-    def fit_transform(self, imgs, n_init=50, random_state=1307):
+    def fit_transform(self, imgs, n_init=50,
+                      random_state=1307,
+                      downsample=True,
+                      transform=True):
         if imgs[0].ndim == 2:
             print("Fitting model for greyscale images")
             return self._fit_single_channel(imgs=imgs,
                                      n_init=n_init,
                                      random_state=random_state,
-                                     transform=True)
+                                     downsample=downsample,
+                                     transform=transform)
         if imgs[0].ndim == 3:
             print("Fitting model for multichannel images")
             return self._fit_multichannel(imgs=imgs,
                                           n_init=n_init,
                                           random_state=random_state,
-                                          transform=True)
+                                          downsample=downsample,
+                                          transform=transform)
 
     def _transform_single_channel(self, imgs,
                                   blocks=None,
