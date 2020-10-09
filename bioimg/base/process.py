@@ -40,7 +40,7 @@ def threshold_img(img, method='yen', binary=False):
     '''
     img_ret = np.copy(img)
 
-    if np.sum(img_ret) < 1e-18:
+    if np.sum(img_ret) < 1e-16:
         return img_ret
 
     if method == 'yen':
@@ -49,6 +49,8 @@ def threshold_img(img, method='yen', binary=False):
         img_ret[img_ret < skimage.filters.threshold_otsu(img)] = 0
     elif method == 'triangle':
         img_ret[img_ret < skimage.filters.threshold_triangle(img)] = 0
+    elif isinstance(method, int) or isinstance(method, float):
+        img_ret[img_ret < method] = 0
 
     if binary:
         return img_ret > 0
