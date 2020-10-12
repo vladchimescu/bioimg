@@ -156,6 +156,35 @@ def get_supblocks(img_blocked, thresh, window_shape=3):
 def flatten_tiles(blocks):
     return np.array([block.ravel() for block in blocks])
 
+# for multichannel images
+def threshold_multichannel(imgs, perc=25, thresh=None):
+    '''Threshold color (multichannel) images
+       -------------------------------------
+       Sets the threshold for the images for each color 
+       channel separately by taking the lower quartile (default)
+       of thresholds found by Otsu method. If thresh is provided,
+       then thresholded based on these pre-computed values
+       
+       Parameters
+       ----------
+       imgs : list of image arrays
+       perc : float (in range 0 to 100)
+       thresh : list-like (optional)
+
+       Returns
+       -------
+       imgs_th : list of thresholded images
+    '''
+    nchan = imgs[0].shape[-1]
+    # compute thresholds for each channel
+    if thresh is None:
+        thresh = [np.percentile([threshold_otsu(img[:,:,c]) for img in imgs], q=perc) 
+                  for c in range(nchan)]
+    # apply the threshold to each channel
+    imgs_th = [np.stack([threshold_img(img[:,:,c], thresh[c]) 
+                         for c in range(nchan)], axis=-1) for img in imgs]
+    return imgs_th, thresh
+
 class SegfreeProfiler:
     def __init__(self, **kwargs):
         '''
@@ -189,6 +218,7 @@ class SegfreeProfiler:
         self.n_supblock_types = kwargs.get('n_supblock_types', 30)
         self.n_subset = kwargs.get('n_subset', 10000)
         self.thresh = True
+        self.thresh_val = None
         
         self.colors = 10
         self.pixel_types = None
@@ -205,7 +235,7 @@ class SegfreeProfiler:
         for k in kwargs.keys():
             self.__setattr__(k, kwargs[k])
             
-    def _handle_greyscale(self, imgs=imgs):
+    def _handle_greyscale(self, imgs):
         # threshold, convert to ubyte,
         # bin the greyscale levels and compute tile features
         if self.thresh:
@@ -218,13 +248,23 @@ class SegfreeProfiler:
         blockfeats = [get_greyscale_blockfeats(t) for t in tiled_imgs]
         return blockfeats, n_tiles
     
-    # finish handle_multichannel function
-    def _handle_multichannel(self, imgs=imgs):
-        if self.thresh:
-            imgs = threshold_multichannel(imgs)
-        pass
+    def _handle_multichannel(self, imgs):
         # preprocess: threshold, compress the colors,
         # and compute tile features
+        if self.thresh:
+            if self.thresh_val is None:
+                imgs, self.thresh_val = threshold_multichannel(imgs)
+            else:
+                imgs, _ = threshold_multichannel(imgs, thresh=self.thresh_val)
+                
+        # not sure if we need this
+        imgs = [img_as_ubyte(img) for img in imgs]
+        tiled_imgs = tile_images(imgs, self.tile_size)
+        # total number of image tiles
+        n_tiles = len(img_tiles) * tiled_imgs[0].shape[0]
+        # compress colors
+        blockfeats = [get_color_blockfeats(t) for t in tiled_imgs]
+        return blockfeats, n_tiles
         
     def _kmeans_tiles(self, blockdf, n_init, random_state, downsample):
         # downsample the image tiles
