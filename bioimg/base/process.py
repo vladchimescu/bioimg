@@ -13,7 +13,7 @@ from skimage import morphology
 from skimage.morphology import disk
 
 
-def threshold_img(img, method='yen', binary=False):
+def threshold_img(img, method='yen', binary=False, minsum=1e-10):
     '''Apply thresholding to a greyscale image
        ---------------------------------------
        Threshold an image and return either a binary image
@@ -24,9 +24,9 @@ def threshold_img(img, method='yen', binary=False):
        ----------
        img : np.array
            Input image, greyscale 2D
-       method : string
-           One of 'yen', 'otsu', 'triangle'. See the documentation
-           (https://scikit-image.org/docs/stable/api/skimage.filters.html)
+       method : string, int or float
+           If string, one of 'yen', 'otsu', 'triangle'. See the documentation
+           (https://scikit-image.org/docs/stable/api/skimage.filters.html). If a number is provided, then used as the intensity cutoff.
        binary : bool
            Return a binary image (0: background, 1: foreground).
            Otherwise the image is multiplied elementwise with the
@@ -40,7 +40,7 @@ def threshold_img(img, method='yen', binary=False):
     '''
     img_ret = np.copy(img)
 
-    if np.sum(img_ret) < 1e-16:
+    if np.sum(img_ret) < minsum:
         return img_ret
 
     if method == 'yen':

@@ -20,11 +20,12 @@ KEYS = ['area',
         'major_axis_length',
         'minor_axis_length',
         'inertia_tensor', 'inertia_tensor_eigvals',
-        'moments', 'moments_central',
+        'moments_central',
         'moments_hu',
-        'weighted_moments',
+        'moments_normalized',
         'weighted_moments_central',
-        'weighted_moments_hu']
+        'weighted_moments_hu',
+        'weighted_moments_normalized']
 
 # create a data frame with texture features
 GLCM_PROPS = ['contrast', 'dissimilarity',

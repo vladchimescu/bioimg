@@ -51,6 +51,7 @@ def plot_dimred(X_df, dims='tsne',
     plt.ylabel(dims.upper() + ' 2')
     if title is not None:
         plt.title(title)
+    return fig, ax
 
 
 def facet_dimred(X_df,
