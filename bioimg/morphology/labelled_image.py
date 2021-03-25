@@ -109,6 +109,7 @@ def compute_zernike(cell, r=15, deg=12):
 
 
 def compute_region_props(cell, keys=KEYS,
+                         thresh='otsu',
                          texture='glcm',
                          zernike=True,
                          distances=[3, 5, 7],
@@ -129,6 +130,11 @@ def compute_region_props(cell, keys=KEYS,
            mean_intensity, eccentricity, image moments, etc).
            See the documentation of skimage.measure
            (https://scikit-image.org/docs/dev/api/skimage.measure.html)
+       thresh : string or float
+           Thresholding method to suppress the background in bounding
+           boxes. If string, method name (e.g. 'otsu', 'yen', 'li', etc).
+           If int/float, then the value is used to threshold the image
+           with img > thresh
        texture : string
            Possible values are ['glcm', 'haralick', 'both']. If 'glcm' is
            chosen (default), texture features are computed using
@@ -154,7 +160,7 @@ def compute_region_props(cell, keys=KEYS,
        df : DataFrame
            DataFrame with morphological properties
     '''
-    bw = cell > 0
+    bw = threshold_img(cell, method=thresh, binary=True)
     prop_df = pd.DataFrame(regionprops_table(bw.astype('int'),
                                         cell, properties=keys))    
     if texture == 'glcm' or texture == 'both':
@@ -229,7 +235,7 @@ class ImgX:
        >>> img_df = imgx_test.get_df()
     '''
 
-    def __init__(self, img, bbox, n_chan=None, y=None, thresh=None):
+    def __init__(self, img, bbox, n_chan=None, y=None):
         '''
         Parameters
         ----------
@@ -243,9 +249,6 @@ class ImgX:
            Default: greyscale (`n_chan=None`)
         y : array-like (optional)
            Labels of bounding boxes (e.g. could be cell types)
-        thresh : string or int/float (optional)
-           Threshold to binarize image for size/area feature computation.
-           By default, Otsu thresholding run in every color channel to identify foreground pixels.
            
         data : dict or DataFrame
            Morphological data with regions (e.g. cells) in rows and
@@ -261,16 +264,16 @@ class ImgX:
         self.bbox = bbox
         self.n_chan = n_chan
         self.y = y
-        self.thresh = thresh
 
         self.data = dict()
         self.target_names = None
-        self.params = {'texture' : 'glcm',
-                         'zernike': True,
-                         'distances': [3, 5, 7],
-                         'angles': [0, np.pi/4, np.pi/2, 3*np.pi/4],
-                         'zernike_radii': [15,18, 20],
-                         'zernike_deg': 12}
+        self.params = {'thresh' : 'otsu',
+                       'texture' : 'glcm',
+                       'zernike': True,
+                       'distances': [3, 5, 7],
+                       'angles': [0, np.pi/4, np.pi/2, 3*np.pi/4],
+                       'zernike_radii': [15,18, 20],
+                       'zernike_deg': 12}
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
@@ -287,14 +290,6 @@ class ImgX:
             self.data[c] = prop_df
         else:
             self.data = prop_df
-
-    def _thresh_background(self, c):
-        if self.thresh is None:
-            self.img[:,:,c] = threshold_img(self.img[:,:,c], method='otsu', binary=False)
-        elif isinstance(self.thresh, string): 
-            self.img[:,:,c] = threshold_img(self.img[:,:,c], method=self.thresh, binary=False)
-        elif hasattr(self.thresh, '__len__'):
-            self.img[:,:,c] = threshold_img(self.img[:,:,c], method=self.thresh[c], binary=False)
 
     def compute_props(self, split=True):
         '''Compute morphological properties of a lablled image
@@ -319,17 +314,14 @@ class ImgX:
         # properties will be computed for each channel separately
         if isinstance(self.n_chan, int) and split:
             for c in range(self.n_chan):
-                self._thresh_background(c=c)
                 self._get_features(img=self.img[:, :, c], c=c)
         if hasattr(self.n_chan, "__len__") and split:
             for c, col in enumerate(self.n_chan):
-                self._thresh_background(c=c)
                 self._get_features(img=self.img[:, :, c], c=col)
         if self.n_chan is None or split is False:
             img_gray = self.img
             if self.img.ndim == 3:
                 img_gray = rgb2gray(self.img)
-            img_gray = threshold_img(img_gray, method='otsu', binary=False)
             self._get_features(img=img_gray)
         return self
 
